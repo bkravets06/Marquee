@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MarqueeKit",
-    platforms: [.iOS(.v18), .macOS(.v14)],
+    platforms: [.iOS("18.0"), .macOS(.v14)],
     products: [
         .library(name: "MarqueeKit", targets: ["MarqueeKit"])
     ],

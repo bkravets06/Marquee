@@ -42,6 +42,13 @@ jobs:
           set -o pipefail
           swift test --package-path MarqueeKit 2>&1 | tee package-test.log
 
+      - name: Project diagnostics
+        run: |
+          echo "--- plutil -lint ---"
+          plutil -lint Marquee.xcodeproj/project.pbxproj || true
+          echo "--- xcodebuild -list ---"
+          xcodebuild -list -project Marquee.xcodeproj 2>&1 || true
+
       - name: Pick simulator
         run: |
           set -o pipefail
@@ -91,12 +98,18 @@ jobs:
             ONLY_ACTIVE_ARCH=YES
             -derivedDataPath DerivedData
             build test)
+          status=0
           if command -v xcbeautify >/dev/null 2>&1; then
-            "${BUILD_CMD[@]}" 2>&1 | tee xcodebuild.log | xcbeautify --renderer github-actions
+            "${BUILD_CMD[@]}" 2>&1 | tee xcodebuild.log | xcbeautify --renderer github-actions || status=$?
           else
             echo "xcbeautify not found; showing raw xcodebuild output."
-            "${BUILD_CMD[@]}" 2>&1 | tee xcodebuild.log
+            "${BUILD_CMD[@]}" 2>&1 | tee xcodebuild.log || status=$?
           fi
+          if [ "$status" -ne 0 ]; then
+            echo "--- raw error context from xcodebuild.log ---"
+            grep -n -i -B2 -A8 -E "error:|Reason:|Failing tests|failed \(" xcodebuild.log | head -400 || true
+          fi
+          exit "$status"
 
       - name: Fail if package tests failed
         if: steps.package_tests.outcome == 'failure'
