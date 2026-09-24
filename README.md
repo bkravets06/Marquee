@@ -17,13 +17,14 @@
 
 ## Screenshots
 
-*Coming soon.*
+Captured by CI in the iPhone 17 Pro simulator (iOS 26).
 
-<!--
-| Discover | Library | Detail |
-| --- | --- | --- |
-| ![Discover](docs/screenshots/discover.png) | ![Library](docs/screenshots/library.png) | ![Detail](docs/screenshots/detail.png) |
--->
+<p>
+  <img src="docs/screenshots/onboarding.png" width="200" alt="Onboarding">
+  <img src="docs/screenshots/library.png" width="200" alt="Library with Up Next and progress rows">
+  <img src="docs/screenshots/detail.png" width="200" alt="Detail with progress card">
+  <img src="docs/screenshots/library-dark.png" width="200" alt="Library in dark mode">
+</p>
 
 ## Requirements
 
