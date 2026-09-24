@@ -23,8 +23,9 @@ public enum TMDBCredential: Hashable, Sendable {
     /// Picks the credential type from the shape of `raw`. Whitespace is trimmed; empty input yields `nil`.
     public static func detect(_ raw: String) -> TMDBCredential? {
         var trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.lowercased().hasPrefix("bearer ") {
-            trimmed = String(trimmed.dropFirst("bearer ".count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        let lowercased = trimmed.lowercased()
+        if lowercased.hasPrefix("bearer ") || lowercased == "bearer" {
+            trimmed = String(trimmed.dropFirst("bearer".count)).trimmingCharacters(in: .whitespacesAndNewlines)
         }
         guard !trimmed.isEmpty else { return nil }
         if trimmed.contains(".") {
