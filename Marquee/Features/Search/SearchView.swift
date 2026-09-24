@@ -70,15 +70,15 @@ struct SearchView: View {
             SearchResultsList(
                 model: model,
                 client: appEnvironment.client,
-                onAdd: add(_:status:),
+                onAdd: { summary, status in add(summary, status: status) },
                 onAddCustom: { isShowingCustomForm = true }
             )
         } else {
             TrendingGrid(
                 model: model,
-                onRetry: retryTrending,
-                onRefresh: refreshTrending,
-                onAdd: add(_:status:)
+                onRetry: { retryTrending() },
+                onRefresh: { await refreshTrending() },
+                onAdd: { summary, status in add(summary, status: status) }
             )
         }
     }
@@ -190,7 +190,7 @@ private struct SearchResultsList: View {
         List {
             if let message = model.errorMessage {
                 Section {
-                    ErrorRetryView(message: message, retry: retry)
+                    ErrorRetryView(message: message, retry: { retry() })
                         .listRowSeparator(.hidden)
                 }
             }
@@ -235,7 +235,7 @@ private struct SearchResultsList: View {
             }
         } else if let message = model.pagingErrorMessage {
             Section {
-                ErrorRetryView(message: message, retry: loadMore)
+                ErrorRetryView(message: message, retry: { loadMore() })
                     .listRowSeparator(.hidden)
             }
         }

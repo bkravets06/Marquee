@@ -54,7 +54,9 @@ struct SettingsView: View {
                 Text("Every show and movie is removed from your library and all reminders are cancelled. Your TMDB key and settings are kept.")
             }
         }
-        .onAppear(perform: loadLocalState)
+        .onAppear {
+            loadLocalState()
+        }
         .task {
             await refreshNotificationState()
         }
@@ -246,8 +248,8 @@ struct SettingsView: View {
 
     private var versionText: String {
         let info = Bundle.main.infoDictionary ?? [:]
-        let version = info["CFBundleShortVersionString"] as? String ?? "1.0"
-        let build = info["CFBundleVersion"] as? String ?? "1"
+        let version = (info["CFBundleShortVersionString"] as? String) ?? "1.0"
+        let build = (info["CFBundleVersion"] as? String) ?? "1"
         return "\(version) (\(build))"
     }
 

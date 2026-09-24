@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import UserNotifications
 import MarqueeKit
 
 // MARK: - MediaDetailView

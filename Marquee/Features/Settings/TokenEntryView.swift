@@ -198,7 +198,9 @@ struct TokenEntryView: View {
         .keyboardType(.asciiCapable)
         .focused($isFieldFocused)
         .submitLabel(.go)
-        .onSubmit(validateAndSave)
+        .onSubmit {
+            validateAndSave()
+        }
         .accessibilityLabel("TMDB API key")
         .onChange(of: rawKey) { _, _ in
             errorMessage = nil
