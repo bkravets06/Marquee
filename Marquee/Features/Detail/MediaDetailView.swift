@@ -8,7 +8,7 @@ import MarqueeKit
 
 /// Detail screen for a show or movie: hero backdrop, poster and title block,
 /// library status and reminder controls, then Next Episode, Progress,
-/// Seasons, Overview and Details cards.
+/// Where to Watch, Seasons, Overview and Details cards.
 struct MediaDetailView: View {
 
     @Environment(AppEnvironment.self) private var appEnvironment
@@ -60,7 +60,7 @@ struct MediaDetailView: View {
             } message: {
                 Text("Your progress and reminders for this title will be deleted.")
             }
-            .task(id: appEnvironment.hasCredentials) {
+            .task(id: loadKey) {
                 await load()
             }
             .onAppear {
@@ -96,6 +96,7 @@ struct MediaDetailView: View {
                     Group {
                         nextEpisodeCard
                         progressCard
+                        watchProvidersCard
                         SeasonsView(model: model)
                         overviewCard
                         detailsCard
@@ -317,6 +318,15 @@ struct MediaDetailView: View {
         }
     }
 
+    private var watchProvidersCard: some View {
+        WatchProvidersView(
+            model: model,
+            region: appEnvironment.settings.region,
+            onRetry: { Task { await model.loadWatchProviders(client: appEnvironment.client) } },
+            onChangeRegion: { isShowingSettings = true }
+        )
+    }
+
     @ViewBuilder
     private var overviewCard: some View {
         if !model.overview.isEmpty {
@@ -481,6 +491,10 @@ struct MediaDetailView: View {
     }
 
     // MARK: Loading
+
+    private var loadKey: DetailLoadKey {
+        DetailLoadKey(hasCredentials: appEnvironment.hasCredentials, region: appEnvironment.settings.region)
+    }
 
     private func load() async {
         await model.load(store: store, client: appEnvironment.client)
@@ -830,6 +844,16 @@ private struct DetailPlaceholder: View {
             .frame(height: height)
             .padding(.horizontal, 16)
     }
+}
+
+// MARK: - DetailLoadKey
+
+/// Identity of the `.task` that loads the screen. It changes when a credential
+/// appears and when the region changes: `AppEnvironment` rebuilds its client
+/// for both, and the Where to Watch card follows the region.
+private struct DetailLoadKey: Hashable {
+    let hasCredentials: Bool
+    let region: String
 }
 
 // MARK: - Previews

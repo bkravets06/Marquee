@@ -180,7 +180,7 @@ struct SettingsView: View {
         } header: {
             Text("Content")
         } footer: {
-            Text("Used for In Theaters and Coming Soon in Discover.")
+            Text("Used for In Theaters and Coming Soon in Discover, and for Where to Watch on show and movie screens.")
         }
     }
 
@@ -243,7 +243,7 @@ struct SettingsView: View {
         } header: {
             Text("About")
         } footer: {
-            Text("This product uses the TMDB API but is not endorsed or certified by TMDB.")
+            Text("This product uses the TMDB API but is not endorsed or certified by TMDB. Where to Watch data is provided by JustWatch.")
         }
     }
 
