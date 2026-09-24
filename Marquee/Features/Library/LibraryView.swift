@@ -175,8 +175,8 @@ struct LibraryView: View {
 
     private var filterMenu: some View {
         Menu {
-            Section("Show") {
-                Picker("Show", selection: $kindFilter.animation()) {
+            Section("Filter") {
+                Picker("Filter", selection: $kindFilter.animation()) {
                     ForEach(MediaKindFilter.allCases) { filter in
                         Label(filter.title, systemImage: filter.symbolName)
                             .tag(filter)
@@ -349,6 +349,7 @@ struct LibraryListView: View {
                     navigator.tab = emptyDestination
                 } label: {
                     Label(emptyButtonTitle, systemImage: emptyButtonSymbol)
+                        .foregroundStyle(.black)
                 }
                 .buttonStyle(.borderedProminent)
             }

@@ -54,7 +54,7 @@ struct EpisodeRow: View {
             if let detailText {
                 Text(detailText)
                     .font(.caption)
-                    .foregroundStyle(isAired ? Color.secondary : Color.accentColor)
+                    .foregroundStyle(.secondary)
             }
             if !episode.overview.isEmpty {
                 Text(episode.overview)

@@ -5,7 +5,8 @@ import MarqueeKit
 // MARK: - ProgressBadge
 //
 // Capsule summarising where the user is in an item:
-//   shows  -> "S2 E5" (last watched), "Not started", or "Caught up"
+//   shows  -> "S2 E5" (last watched), "Not started", "Caught up", or "Watched"
+//             (status Watched while episodes remain)
 //   movies -> "Watched" when watched; otherwise nothing is rendered
 //
 // API:
@@ -37,7 +38,9 @@ struct ProgressBadge: View {
             return item.status == .watched ? .watched : nil
         }
         if item.status == .watched {
-            return .caughtUp
+            // Moving a show to Watched leaves its episode pointer alone, so only
+            // claim "Caught up" when there is nothing left to watch.
+            return item.nextUp == nil ? .caughtUp : .watched
         }
         let progress = item.progress
         guard progress.isStarted else {

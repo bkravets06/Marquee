@@ -30,7 +30,7 @@ struct SearchView: View {
                 }
                 .searchable(
                     text: $model.query,
-                    placement: .navigationBarDrawer(displayMode: .always),
+                    placement: searchPlacement,
                     prompt: "Shows, Movies"
                 )
                 .searchScopes($model.scope) {
@@ -89,8 +89,10 @@ struct SearchView: View {
         } description: {
             Text("Add your TMDB API key or read access token to search for shows and movies.")
         } actions: {
-            Button("Open Settings") {
+            Button {
                 isShowingSettings = true
+            } label: {
+                Text("Open Settings").foregroundStyle(.black)
             }
             .buttonStyle(.borderedProminent)
             Button("Add a Custom Title") {
@@ -104,6 +106,16 @@ struct SearchView: View {
 
     private var hasClient: Bool {
         appEnvironment.client != nil
+    }
+
+    /// On iOS 26 the system places the field of a `role: .search` tab itself
+    /// (in the tab bar), so the default is used there; earlier systems keep
+    /// the field permanently in the navigation bar.
+    private var searchPlacement: SearchFieldPlacement {
+        if #available(iOS 26, *) {
+            return .automatic
+        }
+        return .navigationBarDrawer(displayMode: .always)
     }
 
     /// The query, if any, used to prefill the custom item form.
@@ -128,8 +140,16 @@ struct SearchView: View {
 
     private func add(_ summary: MediaSummary, status: WatchStatus) {
         let store = LibraryStore(context: modelContext)
-        store.add(summary, status: status)
+        let item = store.add(summary, status: status)
         addCount += 1
+        // A freshly added item only carries the summary fields. Fetch its
+        // details now so a show gets seasons and next-episode data (and a
+        // movie its runtime) without waiting for the next library refresh.
+        guard item.lastRefreshedAt == nil else { return }
+        let refresher = LibraryRefresher(environment: appEnvironment, context: modelContext)
+        Task {
+            try? await refresher.refresh(item: item)
+        }
     }
 
     private func retryTrending() {
@@ -202,12 +222,6 @@ private struct SearchResultsList: View {
             footer
         }
         .listStyle(.plain)
-        .overlay(alignment: .top) {
-            if model.isLoading {
-                searchingBadge
-            }
-        }
-        .animation(.easeInOut(duration: 0.2), value: model.isLoading)
     }
 
     private func resultRow(for summary: MediaSummary) -> some View {
@@ -241,23 +255,6 @@ private struct SearchResultsList: View {
         }
     }
 
-    private var searchingBadge: some View {
-        HStack(spacing: 8) {
-            ProgressView()
-                .controlSize(.small)
-            Text("Searching…")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(.regularMaterial, in: Capsule())
-        .padding(.top, 12)
-        .transition(.opacity.combined(with: .move(edge: .top)))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Searching")
-    }
-
     // MARK: Loading and empty states
 
     private var placeholderList: some View {
@@ -283,8 +280,10 @@ private struct SearchResultsList: View {
         } description: {
             Text("Check the spelling or try a new search.")
         } actions: {
-            Button(addCustomTitle, action: onAddCustom)
-                .buttonStyle(.borderedProminent)
+            Button(action: onAddCustom) {
+                Text(addCustomTitle).foregroundStyle(.black)
+            }
+            .buttonStyle(.borderedProminent)
         }
     }
 
@@ -294,8 +293,10 @@ private struct SearchResultsList: View {
         } description: {
             Text(message)
         } actions: {
-            Button("Retry", action: retry)
-                .buttonStyle(.borderedProminent)
+            Button(action: retry) {
+                Text("Retry").foregroundStyle(.black)
+            }
+            .buttonStyle(.borderedProminent)
         }
     }
 
@@ -432,22 +433,19 @@ struct SearchResultRow: View {
 
 // MARK: - QuickAddMenuItems
 
-/// "Start Watching" / "Add to Watchlist" / "Mark Watched" rows for a menu.
-/// The row matching `current` shows a checkmark.
+/// "Add to Watchlist" / "Start Watching" / "Mark Watched" rows for a menu,
+/// in the same order and wording as the Discover cards. The row matching
+/// `current` shows a checkmark.
 private struct QuickAddMenuItems: View {
 
     let current: WatchStatus?
     let onSelect: (WatchStatus) -> Void
 
-    /// Menu order.
-    static let order: [WatchStatus] = [.watching, .watchlist, .watched]
+    /// Menu order, shared with Discover so both tabs match.
+    static let order: [WatchStatus] = DiscoverCard.quickAddStatuses
 
     static func title(for status: WatchStatus) -> String {
-        switch status {
-        case .watching: return "Start Watching"
-        case .watchlist: return "Add to Watchlist"
-        case .watched: return "Mark Watched"
-        }
+        DiscoverCard.quickAddTitle(for: status)
     }
 
     var body: some View {

@@ -89,7 +89,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            NavigationLink("API Key…") {
+            NavigationLink("API Key") {
                 TokenEntryView()
             }
         } header: {

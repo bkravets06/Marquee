@@ -40,7 +40,7 @@
    cd Marquee
    ```
 
-2. Open `Marquee.xcodeproj` in Xcode and run the **Marquee** scheme on a simulator or device.
+2. Open `Marquee.xcodeproj` in Xcode and run the **Marquee** scheme on a simulator or device. To run on a device, select your team under *Signing & Capabilities* for the Marquee target.
 
 3. On first launch, Marquee walks you through onboarding and asks for a **TMDB API Read Access Token**. Create one for free at <https://www.themoviedb.org/settings/api> and paste it in. The token is stored in the iOS Keychain and never leaves your device except to talk to TMDB.
 
@@ -52,8 +52,8 @@ To skip the token prompt while iterating, set the `TMDB_ACCESS_TOKEN` environmen
 
 Marquee schedules **local** notifications; there is no server and no account.
 
-- For shows from TMDB, Marquee reads the *next episode to air* and schedules one notification per show at your preferred reminder time on the air date.
-- A background refresh task re-syncs your library with TMDB at most every 6 hours when iOS allows it, and again every time the app comes to the foreground, so reminders stay accurate as air dates change.
+- For shows from TMDB, Marquee reads the *next episode to air* and schedules one notification per show at your preferred reminder time on the air date. Reminders are on by default for the shows you are watching; every show has a toggle to opt out.
+- A background refresh task re-syncs your library with TMDB at most every 6 hours when iOS allows it. Each time the app comes to the foreground Marquee re-checks your reminders and re-fetches any show it has not refreshed in the last 6 hours, so reminders stay accurate as air dates change. Pull to refresh in Library, or tap **Refresh Episodes Now** in Settings, to force a full refresh.
 - Custom shows use the weekly schedule you set (for example "Tuesdays at 8:00 PM") as a repeating reminder.
 - Turning notifications off for a show, or removing it from your library, cancels its pending reminders.
 

@@ -124,6 +124,7 @@ struct DiscoverCard: View {
     let width: CGFloat
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppEnvironment.self) private var appEnvironment
     @State private var addCount = 0
 
     init(summary: MediaSummary, width: CGFloat = 120) {
@@ -160,8 +161,16 @@ struct DiscoverCard: View {
 
     private func add(_ status: WatchStatus) {
         let store = LibraryStore(context: modelContext)
-        store.add(summary, status: status)
+        let item = store.add(summary, status: status)
         addCount += 1
+        // A freshly added item only carries the summary fields. Fetch its
+        // details now so a show gets seasons and next-episode data (and a
+        // movie its runtime) without waiting for the next library refresh.
+        guard item.lastRefreshedAt == nil else { return }
+        let refresher = LibraryRefresher(environment: appEnvironment, context: modelContext)
+        Task {
+            try? await refresher.refresh(item: item)
+        }
     }
 }
 
@@ -238,5 +247,6 @@ private func previewState(
         }
         .navigationTitle("Discover")
     }
+    .environment(AppEnvironment.shared)
     .modelContainer(PreviewData.container)
 }

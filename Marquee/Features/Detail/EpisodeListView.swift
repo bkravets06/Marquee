@@ -70,7 +70,15 @@ struct EpisodeListView: View {
 
     // MARK: Sections
 
+    @ViewBuilder
     private var episodesSection: some View {
+        if !seasonOverview.isEmpty {
+            Section {
+                Text(seasonOverview)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
         Section {
             ForEach(episodes) { episode in
                 EpisodeRow(
@@ -79,14 +87,6 @@ struct EpisodeListView: View {
                     isAired: isAired(episode),
                     onToggle: toggleAction(for: episode)
                 )
-            }
-        } header: {
-            if !seasonOverview.isEmpty {
-                Text(seasonOverview)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .textCase(nil)
-                    .padding(.bottom, 4)
             }
         }
     }
@@ -125,8 +125,10 @@ struct EpisodeListView: View {
                 } description: {
                     Text(errorMessage)
                 } actions: {
-                    Button("Try Again") {
+                    Button {
                         loadAttempt += 1
+                    } label: {
+                        Text("Try Again").foregroundStyle(.black)
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -134,7 +136,7 @@ struct EpisodeListView: View {
                 ContentUnavailableView(
                     "No Episodes",
                     systemImage: "tv",
-                    description: Text("TMDB hasn't listed any episodes for this season yet.")
+                    description: Text("TMDB hasn’t listed any episodes for this season yet.")
                 )
             }
         }

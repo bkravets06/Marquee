@@ -62,9 +62,9 @@ final class NotificationManager {
     /// Reconciles pending reminders with the plan for `items`.
     ///
     /// Pending Marquee requests that are no longer planned are removed; planned
-    /// requests that are missing (or whose trigger changed, e.g. after the
-    /// reminder time was edited) are added. Does nothing when notifications are
-    /// not authorized.
+    /// requests that are missing (or whose trigger or text changed, e.g. after
+    /// the reminder time or a custom show's title was edited) are re-added.
+    /// Does nothing when notifications are not authorized.
     func sync(items: [MediaItem], settings: AppSettings) async {
         let plan = NotificationPlanner.plan(
             items: items,
@@ -91,7 +91,7 @@ final class NotificationManager {
 
         for planned in plan {
             if let existing = pendingByID[planned.id],
-               NotificationManager.trigger(of: existing, matches: planned) {
+               NotificationManager.request(existing, matches: planned) {
                 continue
             }
             let request = NotificationManager.makeRequest(for: planned)
@@ -109,12 +109,6 @@ final class NotificationManager {
         Task { @MainActor in
             await NotificationManager.removePendingRequests(forItemID: itemID)
         }
-    }
-
-    /// Removes every pending reminder for the item with `itemID`. Awaitable
-    /// variant of `cancel(for:)` for callers that need completion.
-    func cancelPending(forItemID itemID: UUID) async {
-        await NotificationManager.removePendingRequests(forItemID: itemID.uuidString)
     }
 
     /// Number of pending requests that belong to Marquee.
@@ -159,8 +153,10 @@ final class NotificationManager {
         return UNNotificationRequest(identifier: planned.id, content: content, trigger: trigger)
     }
 
-    /// `true` when the pending request already fires when `planned` wants it to.
-    private static func trigger(of request: UNNotificationRequest, matches planned: PlannedNotification) -> Bool {
+    /// `true` when the pending request already says what `planned` says and
+    /// fires when `planned` wants it to.
+    private static func request(_ request: UNNotificationRequest, matches planned: PlannedNotification) -> Bool {
+        guard request.content.title == planned.title, request.content.body == planned.body else { return false }
         guard let trigger = request.trigger as? UNCalendarNotificationTrigger else { return false }
         guard trigger.repeats == planned.repeats else { return false }
         let existing = trigger.dateComponents

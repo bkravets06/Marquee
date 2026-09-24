@@ -175,6 +175,7 @@ struct OnboardingView: View {
                 Text(title)
             }
             .frame(maxWidth: .infinity)
+            .foregroundStyle(.black)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)

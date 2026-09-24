@@ -189,6 +189,9 @@ public actor TMDBClient {
         let endpointPath = endpoint.path.hasPrefix("/") ? endpoint.path : "/" + endpoint.path
         components.path = basePath + endpointPath
         components.queryItems = items
+        // `queryItems` leaves `+` unencoded (legal per RFC 3986), but TMDB decodes a raw `+` as a
+        // space, so "Disney+" would search for "Disney ". Escape it explicitly.
+        components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
 
         var request = URLRequest(url: components.url ?? baseURL)
         request.httpMethod = "GET"

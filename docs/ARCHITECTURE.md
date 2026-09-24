@@ -445,14 +445,15 @@ struct LibraryStore {
     func items(status: WatchStatus) -> [MediaItem]
     func status(of summary: MediaSummary) -> WatchStatus?
 
-    @discardableResult func add(_ summary: MediaSummary, status: WatchStatus) -> MediaItem  // idempotent; existing item -> setStatus
+    @discardableResult func add(_ summary: MediaSummary, status: WatchStatus) -> MediaItem  // idempotent; existing item -> setStatus; a show added straight to .watching gets notificationsEnabled = true
     @discardableResult func addCustom(title: String, kind: MediaKind, status: WatchStatus, overview: String, posterData: Data?, linkURL: URL?, notes: String, totalEpisodes: Int?, schedule: ReleaseSchedule?, notificationsEnabled: Bool) -> MediaItem
+    func updateCustom(_ item: MediaItem, title: String, kind: MediaKind, overview: String, posterData: Data?, linkURL: URL?, notes: String, totalEpisodes: Int?, schedule: ReleaseSchedule?, notificationsEnabled: Bool)  // custom items only; status/progress via setStatus/setProgress; movies clear show-only fields and progress
 
     func apply(_ details: TVShowDetails, to item: MediaItem)   // metadata, seasons, totalEpisodes, showStatus, next episode fields, lastRefreshedAt
     func apply(_ details: MovieDetails, to item: MediaItem)
 
-    func setStatus(_ item: MediaItem, to status: WatchStatus)   // watched: finishedAt = now, lastWatchedAt = now; watching from watched clears finishedAt
-    func setProgress(_ item: MediaItem, to pointer: EpisodePointer)  // updates lastWatchedAt, updatedAt; if status == .watchlist -> .watching
+    func setStatus(_ item: MediaItem, to status: WatchStatus)   // watched: finishedAt = now, lastWatchedAt = now; watching from watched clears finishedAt; .watchlist -> .watching on a TMDB show turns notificationsEnabled on
+    func setProgress(_ item: MediaItem, to pointer: EpisodePointer)  // updates lastWatchedAt, updatedAt; if status == .watchlist -> .watching (and turns notificationsEnabled on for a TMDB show)
     func markNextEpisodeWatched(_ item: MediaItem)               // uses item.nextUp; no-op when caught up
     func markPreviousEpisodeUnwatched(_ item: MediaItem)
     func markMovieWatched(_ item: MediaItem)                     // setStatus(.watched)
@@ -467,6 +468,12 @@ struct LibraryStore {
 ```
 
 All mutations set `updatedAt = .now` and call `save()`.
+
+New-episode reminders default to on for a TMDB show from the moment the user
+starts following it (added straight to Watching, or promoted from the
+watchlist); custom shows keep the form's choice and shows already in Watching
+or Watched keep whatever the user set. Reminders are never switched off
+automatically; the per-show toggle is the opt-out.
 
 ### 3.3 `PreviewData`
 
@@ -555,16 +562,20 @@ Pull to refresh. Sections load independently (each `.task`) and show
 redacted placeholders while loading; a failing section shows an inline retry.
 
 **Library** — Large title "Library". Segmented `Picker` (Watching / Watchlist /
-Watched) in the top of the list (`.pickerStyle(.segmented)`), toolbar: filter
-menu (All/Shows/Movies), sort menu (Recently updated / Title / Date added),
-`plus` menu ("Add Custom Show…", "Add Custom Movie…"), `gearshape`. Watching
+Watched) in the top of the list (`.pickerStyle(.segmented)`), toolbar: one
+"Filter and Sort" `Menu` (`line.3.horizontal.decrease.circle`, filled variant
+while a non-default choice is active) holding a "Filter" section (All / Shows /
+Movies) and a "Sort By" section (Recently Updated / Title / Date Added), both
+inline `Picker`s; `plus` menu ("Add Custom Show…", "Add Custom Movie…"),
+`gearshape`. Watching
 segment shows an "Up Next" horizontal strip (`UpNextStrip`) of shows whose next
 episode airs within 7 days ("Thu · S3 E4"). Rows (`LibraryRow`): 56×84 poster,
 title, subtitle (shows: "S2 E5 · 12 of 24" + next-air relative date; movies:
 year · runtime), trailing circular button: shows → mark next episode watched
 (`checkmark.circle`), movies → mark watched. Swipe leading: mark next watched;
 swipe trailing: Delete (destructive), Watchlist/Watched moves. Context menu:
-status options, Notifications toggle (shows), Edit (custom), Delete. Empty
+status options, Notifications toggle (shows; a custom show only once it has
+a release schedule), Edit (custom), Delete. Empty
 states per segment with a "Discover" / "Search" button. Tap → `MediaDetailView(.library(id))`.
 `NavigationStack(path: $navigator.libraryPath)` and `.navigationDestination(for: LibraryRoute.self)`.
 
@@ -573,7 +584,9 @@ states per segment with a "Discover" / "Search" button. Tap → `MediaDetailView
 `DetailModel` resolves: library item (if any) + fresh TMDB details when a
 `tmdbID` exists (and calls `store.apply` to keep the item fresh). Layout: hero
 backdrop (16:9, gradient into background, `.ignoresSafeArea(edges: .top)`),
-poster + title block (title `.largeTitle.bold()`, tagline, metadata line "2024 ·
+poster + title block (title `.title2.bold()` in a compact width class,
+`.title.bold()` in regular — the nav bar shows the title inline; tagline,
+metadata line "2024 ·
 3 seasons · TV-MA-free, just year · seasons/runtime · ★ 8.1"), genre chips,
 action row: `StatusMenu` as a prominent `Menu` button (label shows current
 status or "Add to Library"), notifications `Toggle` (shows in library only),
@@ -593,8 +606,10 @@ Toolbar: ellipsis menu (Refresh, Remove from Library).
 `.searchScopes` All / Shows / Movies, 300 ms debounce via task cancellation,
 results `List` of `SearchResultRow` (50×75 poster, title, "2019 · Show", status
 check if in library, trailing `plus.circle` quick-add `Menu`). Empty query:
-"Trending this week" grid. No results: `ContentUnavailableView.search(text:)`
-plus a "Add “<query>” as a custom title" button that opens `CustomItemForm`
+"Trending this week" grid. No results: a `ContentUnavailableView` built with
+the label/description/actions initializer (`.search(text:)` cannot carry
+actions): title "No Results for “<query>”" with `magnifyingglass`, and a
+prominent "Add “<query>” as a Custom Title" button that opens `CustomItemForm`
 prefilled. Errors show a retry.
 
 **Custom item form** — `CustomItemForm(item: MediaItem? = nil, prefilledTitle: String? = nil, kind: MediaKind = .show)`

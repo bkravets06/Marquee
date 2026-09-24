@@ -78,8 +78,9 @@ private struct UpNextCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 PosterView(item: item, width: UpNextStrip.posterWidth)
                 Text(item.title)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(1)
+                    .font(.footnote.weight(.semibold))
+                    .lineLimit(2, reservesSpace: true)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(caption)
                     .font(.caption2)
                     .foregroundStyle(.secondary)

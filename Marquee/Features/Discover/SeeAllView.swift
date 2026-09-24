@@ -128,10 +128,12 @@ struct SeeAllView: View {
         } description: {
             Text(message)
         } actions: {
-            Button("Retry") {
+            Button {
                 Task {
                     await refresh()
                 }
+            } label: {
+                Text("Retry").foregroundStyle(.black)
             }
             .buttonStyle(.borderedProminent)
         }

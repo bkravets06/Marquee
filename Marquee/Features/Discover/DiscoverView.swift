@@ -93,8 +93,10 @@ struct DiscoverView: View {
         } description: {
             Text("Add your TMDB API key or read access token to browse what’s trending, airing and in theaters.")
         } actions: {
-            Button("Open Settings") {
+            Button {
                 isShowingSettings = true
+            } label: {
+                Text("Open Settings").foregroundStyle(.black)
             }
             .buttonStyle(.borderedProminent)
         }
@@ -106,10 +108,12 @@ struct DiscoverView: View {
         } description: {
             Text(model.firstErrorMessage ?? "Something went wrong while talking to TMDB.")
         } actions: {
-            Button("Retry") {
+            Button {
                 Task {
                     await refresh()
                 }
+            } label: {
+                Text("Retry").foregroundStyle(.black)
             }
             .buttonStyle(.borderedProminent)
         }

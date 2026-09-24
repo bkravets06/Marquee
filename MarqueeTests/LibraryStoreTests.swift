@@ -72,6 +72,34 @@ final class LibraryStoreTests: XCTestCase {
         XCTAssertNotNil(item.lastWatchedAt)
     }
 
+    func testReminderDefaults() throws {
+        let store = try makeStore()
+
+        let watchingShow = store.add(PreviewData.sampleSummary, status: .watching)
+        XCTAssertTrue(watchingShow.notificationsEnabled)
+
+        let movie = store.add(PreviewData.sampleMovieSummary, status: .watching)
+        XCTAssertFalse(movie.notificationsEnabled)
+
+        let listed = makeShow(in: store, status: .watchlist, tmdbID: 2, title: "Listed")
+        XCTAssertFalse(listed.notificationsEnabled)
+        store.setStatus(listed, to: .watching)
+        XCTAssertTrue(listed.notificationsEnabled)
+
+        let promoted = makeShow(in: store, status: .watchlist, tmdbID: 3, title: "Promoted")
+        store.setProgress(promoted, to: EpisodePointer(season: 1, episode: 1))
+        XCTAssertEqual(promoted.status, .watching)
+        XCTAssertTrue(promoted.notificationsEnabled)
+
+        let finished = makeShow(in: store, status: .watched, tmdbID: 4, title: "Finished")
+        store.setStatus(finished, to: .watching)
+        XCTAssertFalse(finished.notificationsEnabled)
+
+        let custom = store.addCustom(title: "Custom", kind: .show, status: .watchlist, overview: "", posterData: nil, linkURL: nil, notes: "", totalEpisodes: nil, schedule: nil, notificationsEnabled: false)
+        store.setStatus(custom, to: .watching)
+        XCTAssertFalse(custom.notificationsEnabled)
+    }
+
     func testAddCustomPersistsScheduleAndPoster() throws {
         let store = try makeStore()
         let schedule = ReleaseSchedule(weekday: 3, hour: 20, minute: 0)
@@ -126,6 +154,48 @@ final class LibraryStoreTests: XCTestCase {
         XCTAssertNil(created.releaseSchedule)
         XCTAssertFalse(created.notificationsEnabled)
         XCTAssertNil(created.nextUp)
+    }
+
+    func testUpdateCustomRewritesFieldsAndClearsShowFieldsForMovies() throws {
+        let store = try makeStore()
+        let item = store.addCustom(
+            title: "Old",
+            kind: .show,
+            status: .watching,
+            overview: "",
+            posterData: nil,
+            linkURL: nil,
+            notes: "",
+            totalEpisodes: 8,
+            schedule: ReleaseSchedule(weekday: 2, hour: 20, minute: 0),
+            notificationsEnabled: true
+        )
+        store.setProgress(item, to: EpisodePointer(season: 1, episode: 3))
+        let before = item.updatedAt
+
+        store.updateCustom(
+            item,
+            title: "New",
+            kind: .movie,
+            overview: "Changed",
+            posterData: nil,
+            linkURL: URL(string: "https://example.com"),
+            notes: "Note",
+            totalEpisodes: 8,
+            schedule: ReleaseSchedule(weekday: 2, hour: 20, minute: 0),
+            notificationsEnabled: true
+        )
+        XCTAssertEqual(item.title, "New")
+        XCTAssertTrue(item.isMovie)
+        XCTAssertEqual(item.overview, "Changed")
+        XCTAssertEqual(item.notes, "Note")
+        XCTAssertEqual(item.linkURL?.absoluteString, "https://example.com")
+        XCTAssertNil(item.totalEpisodes)
+        XCTAssertNil(item.releaseSchedule)
+        XCTAssertFalse(item.notificationsEnabled)
+        XCTAssertEqual(item.progress, .notStarted)
+        XCTAssertEqual(item.status, .watching)
+        XCTAssertGreaterThanOrEqual(item.updatedAt, before)
     }
 
     // MARK: Status

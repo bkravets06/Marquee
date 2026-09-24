@@ -29,13 +29,13 @@ public struct CivilDate: Hashable, Comparable, Codable, Sendable, CustomStringCo
         self.init(year: year, month: month, day: day)
     }
 
-    /// The civil date of `date` in `calendar`.
+    /// The (Gregorian) civil date of `date` in `calendar`'s time zone.
     public init(_ date: Date, calendar: Calendar = .current) {
-        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        let components = CivilDate.gregorian(matching: calendar).dateComponents([.year, .month, .day], from: date)
         self.init(year: components.year ?? 1970, month: components.month ?? 1, day: components.day ?? 1)
     }
 
-    /// Today's civil date in `calendar`.
+    /// Today's civil date in `calendar`'s time zone.
     public static func today(calendar: Calendar = .current) -> CivilDate {
         CivilDate(Date(), calendar: calendar)
     }
@@ -51,7 +51,7 @@ public struct CivilDate: Hashable, Comparable, Codable, Sendable, CustomStringCo
 
     // MARK: Conversion
 
-    /// The instant at `hour:minute` on this date in `calendar`, or `nil` if the calendar cannot resolve it.
+    /// The instant at `hour:minute` on this date in `calendar`'s time zone, or `nil` if it cannot be resolved.
     public func date(in calendar: Calendar = .current, hour: Int = 0, minute: Int = 0) -> Date? {
         var components = DateComponents()
         components.year = year
@@ -60,7 +60,7 @@ public struct CivilDate: Hashable, Comparable, Codable, Sendable, CustomStringCo
         components.hour = hour
         components.minute = minute
         components.second = 0
-        return calendar.date(from: components)
+        return CivilDate.gregorian(matching: calendar).date(from: components)
     }
 
     /// Midnight at the start of this date in `calendar`.
@@ -93,6 +93,21 @@ public struct CivilDate: Hashable, Comparable, Codable, Sendable, CustomStringCo
     }
 
     // MARK: Helpers
+
+    /// `calendar` itself when it is Gregorian, otherwise a Gregorian calendar in the same time zone and locale.
+    /// Civil dates are always Gregorian ("YYYY-MM-DD", as TMDB sends them), so they must never be interpreted
+    /// through a device calendar such as Buddhist or Japanese, whose year numbering differs.
+    static func gregorian(matching calendar: Calendar) -> Calendar {
+        switch calendar.identifier {
+        case .gregorian, .iso8601:
+            return calendar
+        default:
+            var gregorianCalendar = Calendar(identifier: .gregorian)
+            gregorianCalendar.timeZone = calendar.timeZone
+            gregorianCalendar.locale = calendar.locale
+            return gregorianCalendar
+        }
+    }
 
     private static func pad(_ value: Int, width: Int) -> String {
         let digits = String(abs(value))

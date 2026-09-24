@@ -13,9 +13,9 @@ import MarqueeKit
 /// API:
 ///   CustomItemForm(item: MediaItem? = nil, prefilledTitle: String? = nil, kind: MediaKind = .show)
 ///
-/// New items are persisted with `LibraryStore.addCustom`; edits update the
-/// passed item in place. Photos are downscaled to a 600px JPEG before they are
-/// stored. Saving re-syncs reminders (and asks for notification permission the
+/// New items are persisted with `LibraryStore.addCustom`; edits go through
+/// `LibraryStore.updateCustom`. Photos are downscaled to a 600px JPEG before
+/// they are stored. Saving re-syncs reminders (and asks for notification permission the
 /// first time reminders are switched on).
 struct CustomItemForm: View {
 
@@ -266,7 +266,7 @@ struct CustomItemForm: View {
 
     private var navigationTitle: String {
         if isEditing {
-            return "Edit Title"
+            return draft.kind == .show ? "Edit Show" : "Edit Movie"
         }
         return draft.kind == .show ? "New Show" : "New Movie"
     }
@@ -404,42 +404,37 @@ struct CustomItemForm: View {
         let pointer = progressPointer
         if pointer.isStarted {
             store.setProgress(created, to: pointer)
+            // setProgress promotes Watchlist to Watching; keep the status the user chose.
+            if created.status != draft.status {
+                store.setStatus(created, to: draft.status)
+            }
         }
     }
 
     private func update(_ item: MediaItem, store: LibraryStore) {
-        item.title = trimmedTitle
-        item.kind = draft.kind
-        item.overview = draft.overview.trimmingCharacters(in: .whitespacesAndNewlines)
-        item.customPosterData = draft.posterData
-        item.linkURL = linkURL
-        item.notes = draft.notes.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if draft.kind == .show {
-            item.totalEpisodes = totalEpisodes
-            item.releaseSchedule = schedule
-            item.notificationsEnabled = remindersEnabled
-        } else {
-            item.totalEpisodes = nil
-            item.releaseSchedule = nil
-            item.notificationsEnabled = false
-            item.progress = .notStarted
-        }
-        item.updatedAt = .now
-
-        if item.status != draft.status {
-            store.setStatus(item, to: draft.status)
-        }
+        store.updateCustom(
+            item,
+            title: trimmedTitle,
+            kind: draft.kind,
+            overview: draft.overview.trimmingCharacters(in: .whitespacesAndNewlines),
+            posterData: draft.posterData,
+            linkURL: linkURL,
+            notes: draft.notes.trimmingCharacters(in: .whitespacesAndNewlines),
+            totalEpisodes: totalEpisodes,
+            schedule: schedule,
+            notificationsEnabled: remindersEnabled
+        )
 
         let pointer = progressPointer
         if draft.kind == .show, item.progress != pointer {
-            if pointer.isStarted {
-                store.setProgress(item, to: pointer)
-            } else {
-                item.progress = .notStarted
-            }
+            store.setProgress(item, to: pointer)
         }
-        store.save()
+
+        // Status last: setProgress promotes Watchlist to Watching, and the
+        // picker shows what the user chose.
+        if item.status != draft.status {
+            store.setStatus(item, to: draft.status)
+        }
     }
 
     // MARK: Photos

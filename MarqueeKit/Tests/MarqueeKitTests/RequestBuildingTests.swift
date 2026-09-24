@@ -130,6 +130,16 @@ final class RequestBuildingTests: XCTestCase {
         XCTAssertEqual(TestSupport.queryItems(of: request).count, 4)
     }
 
+    func testPlusSignInSearchQueryIsPercentEncoded() {
+        let client = TestSupport.makeClient()
+        let request = client.makeRequest(.search(query: "c++", kind: nil, page: 1))
+        let absolute = request.url?.absoluteString ?? ""
+        XCTAssertTrue(absolute.contains("query=c%2B%2B"), absolute)
+        XCTAssertFalse(absolute.contains("+"), absolute)
+        // Parsing the URL back must yield the original query, which proves %2B round-trips to '+'.
+        XCTAssertEqual(TestSupport.query(of: request)["query"], "c++")
+    }
+
     // MARK: Ordering and base URL
 
     func testQueryItemsAreSortedByName() {

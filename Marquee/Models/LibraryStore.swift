@@ -69,7 +69,8 @@ struct LibraryStore {
     // MARK: Adding
 
     /// Adds a TMDB result to the library. Idempotent: an existing item just
-    /// has its status updated.
+    /// has its status updated. A show added straight to Watching gets
+    /// new-episode reminders on by default (see `enableDefaultReminders`).
     @discardableResult
     func add(_ summary: MediaSummary, status: WatchStatus) -> MediaItem {
         if let existing = item(tmdbID: summary.id, kind: summary.kind) {
@@ -92,6 +93,9 @@ struct LibraryStore {
             let now = Date.now
             item.finishedAt = now
             item.lastWatchedAt = now
+        }
+        if status == .watching {
+            enableDefaultReminders(for: item)
         }
         context.insert(item)
         save()
@@ -135,6 +139,40 @@ struct LibraryStore {
         context.insert(item)
         save()
         return item
+    }
+
+    /// Rewrites the user-editable fields of a custom item. Status and
+    /// progress are changed with `setStatus` / `setProgress`, not here.
+    func updateCustom(
+        _ item: MediaItem,
+        title: String,
+        kind: MediaKind,
+        overview: String,
+        posterData: Data?,
+        linkURL: URL?,
+        notes: String,
+        totalEpisodes: Int?,
+        schedule: ReleaseSchedule?,
+        notificationsEnabled: Bool
+    ) {
+        item.title = title
+        item.kind = kind
+        item.overview = overview
+        item.customPosterData = posterData
+        item.linkURL = linkURL
+        item.notes = notes
+        if kind == .show {
+            item.totalEpisodes = totalEpisodes
+            item.releaseSchedule = schedule
+            item.notificationsEnabled = notificationsEnabled
+        } else {
+            item.totalEpisodes = nil
+            item.releaseSchedule = nil
+            item.notificationsEnabled = false
+            item.progress = .notStarted
+        }
+        item.updatedAt = .now
+        save()
     }
 
     // MARK: Applying TMDB details
@@ -221,6 +259,9 @@ struct LibraryStore {
             if previous == .watched {
                 item.finishedAt = nil
             }
+            if status == .watching, previous == .watchlist {
+                enableDefaultReminders(for: item)
+            }
         }
         item.updatedAt = now
         save()
@@ -236,6 +277,7 @@ struct LibraryStore {
         }
         if item.status == .watchlist {
             item.status = .watching
+            enableDefaultReminders(for: item)
         }
         item.updatedAt = now
         save()
@@ -335,6 +377,16 @@ struct LibraryStore {
     }
 
     // MARK: Private helpers
+
+    /// New-episode reminders are on by default for a TMDB show from the moment
+    /// the user starts following it: added straight to Watching, or promoted
+    /// from the watchlist (where the flag is still at its untouched default).
+    /// Custom shows keep the choice made in their form, and a show already in
+    /// Watching or Watched keeps whatever the user set.
+    private func enableDefaultReminders(for item: MediaItem) {
+        guard item.isShow, !item.isCustom else { return }
+        item.notificationsEnabled = true
+    }
 
     private func tmdbShows() -> [MediaItem] {
         let showRaw = MediaKind.show.rawValue

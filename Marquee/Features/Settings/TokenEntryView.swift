@@ -83,7 +83,7 @@ struct TokenEntryView: View {
             }
             .buttonStyle(.borderless)
         } header: {
-            Text("API Read Access Token")
+            Text("API Key or Token")
         } footer: {
             Text(explanation)
         }
@@ -160,6 +160,7 @@ struct TokenEntryView: View {
                     Text("Validate & Save")
                 }
                 .frame(maxWidth: .infinity)
+                .foregroundStyle(.black)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)

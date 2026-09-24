@@ -21,7 +21,10 @@ struct MediaDetailView: View {
     @State private var isEditing = false
     @State private var isConfirmingRemoval = false
     @State private var isOverviewExpanded = false
+    @State private var overviewFullHeight: CGFloat = 0
+    @State private var overviewClampedHeight: CGFloat = 0
     @State private var isScrolledPastHero = false
+    @State private var isShowingSettings = false
     @State private var successCount = 0
     @State private var undoCount = 0
 
@@ -45,6 +48,9 @@ struct MediaDetailView: View {
             }
             .sheet(isPresented: $isEditing) {
                 editSheet
+            }
+            .sheet(isPresented: $isShowingSettings) {
+                SettingsView()
             }
             .confirmationDialog("Remove from Library?", isPresented: $isConfirmingRemoval, titleVisibility: .visible) {
                 Button("Remove", role: .destructive) {
@@ -235,10 +241,21 @@ struct MediaDetailView: View {
 
     private func notificationsControl(for item: MediaItem) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("New Episode Alerts", systemImage: "bell.badge", isOn: notificationsBinding(for: item))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            Group {
+                if item.isCustom && item.releaseSchedule == nil {
+                    // Nothing can be scheduled for a custom show until it has a
+                    // weekly schedule, which the edit form owns.
+                    Button("Set Up Reminders", systemImage: "bell") {
+                        isEditing = true
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Toggle("New Episode Reminders", systemImage: "bell", isOn: notificationsBinding(for: item))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             if item.notificationsEnabled && appEnvironment.notifications.authorizationStatus == .denied {
                 deniedNotice
             }
@@ -272,6 +289,9 @@ struct MediaDetailView: View {
             ErrorRetryView(message: message) {
                 Task { await load() }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .padding(.horizontal, 16)
         }
     }
@@ -308,7 +328,30 @@ struct MediaDetailView: View {
                     Text(model.overview)
                         .font(.body)
                         .lineLimit(isOverviewExpanded ? nil : 4)
-                    if model.overview.count > 240 {
+                        .background {
+                            // Hidden full and clamped copies: comparing their heights
+                            // tells whether the clamp hides anything at this width and
+                            // Dynamic Type size, so truncation is always recoverable.
+                            ZStack(alignment: .top) {
+                                Text(model.overview)
+                                    .lineLimit(4)
+                                    .onGeometryChange(for: CGFloat.self) { proxy in
+                                        proxy.size.height
+                                    } action: { height in
+                                        overviewClampedHeight = height
+                                    }
+                                Text(model.overview)
+                                    .onGeometryChange(for: CGFloat.self) { proxy in
+                                        proxy.size.height
+                                    } action: { height in
+                                        overviewFullHeight = height
+                                    }
+                            }
+                            .font(.body)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .hidden()
+                        }
+                    if overviewFullHeight > overviewClampedHeight + 1 {
                         Button(isOverviewExpanded ? "Less" : "More") {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 isOverviewExpanded.toggle()
@@ -356,9 +399,18 @@ struct MediaDetailView: View {
         } description: {
             Text(unavailableDescription)
         } actions: {
-            if !model.isMissingLibraryItem {
-                Button("Try Again") {
+            if model.needsCredentials {
+                Button {
+                    isShowingSettings = true
+                } label: {
+                    Text("Open Settings").foregroundStyle(.black)
+                }
+                .buttonStyle(.borderedProminent)
+            } else if !model.isMissingLibraryItem {
+                Button {
                     Task { await load() }
+                } label: {
+                    Text("Try Again").foregroundStyle(.black)
                 }
                 .buttonStyle(.borderedProminent)
             }
@@ -435,6 +487,14 @@ struct MediaDetailView: View {
 
     private func load() async {
         await model.load(store: store, client: appEnvironment.client)
+        // `store.apply` may have moved or replaced the next episode; keep the
+        // pending reminder in step, as every other refresh path does.
+        if model.errorMessage == nil, let item = model.item, item.isShow, item.tmdbID != nil, item.notificationsEnabled {
+            await appEnvironment.notifications.sync(
+                items: store.showsWithNotificationsEnabled(),
+                settings: appEnvironment.settings
+            )
+        }
     }
 
     // MARK: Library actions
@@ -446,6 +506,18 @@ struct MediaDetailView: View {
             let added = store.add(summary, status: status)
             model.applyLoadedDetails(to: added, store: store)
             model.item = added
+            // Reminders default to on for a show added to Watching; schedule
+            // its next-episode reminder now rather than at the next refresh.
+            if added.notificationsEnabled {
+                let environment = appEnvironment
+                let library = store
+                Task { @MainActor in
+                    await environment.notifications.sync(
+                        items: library.showsWithNotificationsEnabled(),
+                        settings: environment.settings
+                    )
+                }
+            }
         } else {
             return
         }
@@ -611,21 +683,33 @@ private struct ProgressCardContent: View {
         }
     }
 
+    /// Side by side while both titles fit; stacked at larger text sizes.
     private var buttons: some View {
-        HStack(spacing: 12) {
-            Button(action: onMarkNext) {
-                Label("Mark Next Watched", systemImage: "checkmark.circle")
-                    .frame(maxWidth: .infinity)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                buttonPair
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(!canMarkNext)
-            Button(action: onUndo) {
-                Label("Undo", systemImage: "arrow.uturn.backward")
-                    .frame(maxWidth: .infinity)
+            VStack(spacing: 12) {
+                buttonPair
             }
-            .buttonStyle(.bordered)
-            .disabled(!item.progress.isStarted)
         }
+    }
+
+    @ViewBuilder
+    private var buttonPair: some View {
+        Button(action: onMarkNext) {
+            Label("Mark Next Watched", systemImage: "checkmark.circle")
+                .foregroundStyle(.black)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(!canMarkNext)
+        Button(action: onUndo) {
+            Label("Undo", systemImage: "arrow.uturn.backward")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .disabled(!item.progress.isStarted)
     }
 
     // MARK: Derived
@@ -635,8 +719,8 @@ private struct ProgressCardContent: View {
     }
 
     private var headline: String {
-        if isCaughtUp { return "You're caught up" }
-        if item.progress.isStarted { return "You're on \(item.progress.label)" }
+        if isCaughtUp { return "You’re caught up" }
+        if item.progress.isStarted { return "You’re on \(item.progress.label)" }
         return "Not started"
     }
 

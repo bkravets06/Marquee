@@ -183,6 +183,13 @@ struct LibraryRow: View {
     private var primaryAction: PrimaryAction? {
         if item.isShow {
             guard item.status != .watched, let next = item.nextUp else { return nil }
+            // Mirror the detail screen: no marking an episode TMDB says has not aired yet.
+            if let pointer = item.nextEpisodePointer,
+               let airDate = item.nextEpisodeAirDate,
+               pointer == next,
+               airDate > Date.now {
+                return nil
+            }
             return .markNextEpisode(next)
         }
         return item.status == .watched ? nil : .markMovieWatched
@@ -247,7 +254,7 @@ struct LibraryRow: View {
                     Label(action.title, systemImage: "checkmark.circle")
                 }
             }
-            ForEach(otherStatuses) { status in
+            ForEach(contextMenuStatuses) { status in
                 Button {
                     setStatus(status)
                 } label: {
@@ -257,7 +264,7 @@ struct LibraryRow: View {
         }
         if item.isShow || item.isCustom {
             Section {
-                if item.isShow {
+                if item.isShow, !item.isCustom || item.releaseSchedule != nil {
                     Toggle("New Episode Reminders", systemImage: "bell", isOn: notificationsBinding)
                 }
                 if item.isCustom {
@@ -280,6 +287,12 @@ struct LibraryRow: View {
         WatchStatus.allCases.filter { $0 != item.status }
     }
 
+    /// Statuses offered in the context menu. For movies the primary action
+    /// already is "Mark Watched", so `.watched` is left out to avoid a duplicate row.
+    private var contextMenuStatuses: [WatchStatus] {
+        otherStatuses.filter { !(item.isMovie && $0 == .watched) }
+    }
+
     private func setStatus(_ status: WatchStatus) {
         withAnimation {
             store.setStatus(item, to: status)
@@ -293,7 +306,7 @@ struct LibraryRow: View {
         switch status {
         case .watching: return "Move to Watching"
         case .watchlist: return "Move to Watchlist"
-        case .watched: return "Mark as Watched"
+        case .watched: return "Mark Watched"
         }
     }
 

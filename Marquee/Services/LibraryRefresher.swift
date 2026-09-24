@@ -32,7 +32,7 @@ final class LibraryRefresher {
     // MARK: Refresh all
 
     /// Refreshes every TMDB show that needs it, then re-syncs reminders and
-    /// records `settings.lastLibraryRefresh`.
+    /// records `settings.lastLibraryRefresh` (only when the loop ran to the end).
     ///
     /// - Parameter force: When `true`, refreshes every eligible show regardless
     ///   of how recently it was fetched.
@@ -55,17 +55,29 @@ final class LibraryRefresher {
         }
 
         let interval: TimeInterval = force ? 0 : LibraryRefresher.staleInterval
-        let items = store.showsNeedingRefresh(olderThan: interval)
+        // Capture identifiers before the first suspension: the user can delete
+        // items while requests are in flight, and touching a deleted model traps.
+        let targets: [(id: UUID, tmdbID: Int)] = store.showsNeedingRefresh(olderThan: interval)
+            .compactMap { item -> (id: UUID, tmdbID: Int)? in
+                guard let tmdbID = item.tmdbID else { return nil }
+                return (id: item.id, tmdbID: tmdbID)
+            }
+        var completed = true
 
-        refreshLoop: for item in items {
-            if Task.isCancelled { break }
-            guard let tmdbID = item.tmdbID else { continue }
+        refreshLoop: for (itemID, tmdbID) in targets {
+            if Task.isCancelled {
+                completed = false
+                break
+            }
             do {
                 let details = try await client.showDetails(id: tmdbID)
+                // The show may have been removed while the request was in flight.
+                guard let item = store.item(id: itemID) else { continue }
                 store.apply(details, to: item)
             } catch let error as TMDBError {
                 LibraryRefresher.logger.notice("Refresh of TMDB show \(tmdbID) failed: \(error.localizedDescription, privacy: .public)")
                 if LibraryRefresher.shouldStop(after: error) {
+                    completed = false
                     break refreshLoop
                 }
                 continue
@@ -76,7 +88,9 @@ final class LibraryRefresher {
         }
 
         await syncNotifications(store: store)
-        environment.settings.lastLibraryRefresh = .now
+        if completed {
+            environment.settings.lastLibraryRefresh = .now
+        }
     }
 
     // MARK: Refresh one
@@ -89,15 +103,19 @@ final class LibraryRefresher {
             throw TMDBError.missingCredentials
         }
         let store = LibraryStore(context: context)
+        let itemID = item.id
 
         switch item.kind {
         case .show:
             let details = try await client.showDetails(id: tmdbID)
-            store.apply(details, to: item)
+            // The item may have been removed while the request was in flight.
+            guard let live = store.item(id: itemID) else { return }
+            store.apply(details, to: live)
             await syncNotifications(store: store)
         case .movie:
             let details = try await client.movieDetails(id: tmdbID)
-            store.apply(details, to: item)
+            guard let live = store.item(id: itemID) else { return }
+            store.apply(details, to: live)
         }
     }
 

@@ -408,7 +408,7 @@ final class DetailModel {
     private func appendLibraryEntries(to entries: inout [DetailEntry]) {
         guard let item else { return }
         if item.isCustom, item.isShow {
-            let reminders = item.releaseSchedule.map { $0.summary() } ?? "Off"
+            let reminders = item.notificationsEnabled ? (item.releaseSchedule.map { $0.summary() } ?? "Off") : "Off"
             entries.append(DetailEntry(label: "Reminders", value: .text(reminders)))
         }
         if item.status == .watched, let finished = item.finishedAt {

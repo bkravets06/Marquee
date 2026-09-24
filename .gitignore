@@ -22,6 +22,10 @@ Package.resolved
 # macOS
 .DS_Store
 
+# Python (scripts/)
+__pycache__/
+*.pyc
+
 # Secrets (never commit API keys)
 Secrets.xcconfig
 *.local.xcconfig
