@@ -176,6 +176,11 @@ private struct DiscoverQuickAddItems: View {
 
     @Environment(\.modelContext) private var modelContext
 
+    init(summary: MediaSummary, onSelect: @escaping (WatchStatus) -> Void) {
+        self.summary = summary
+        self.onSelect = onSelect
+    }
+
     var body: some View {
         rows(current: LibraryStore(context: modelContext).status(of: summary))
     }
