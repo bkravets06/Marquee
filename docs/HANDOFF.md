@@ -151,10 +151,9 @@ booted simulator through these and writes PNGs; it is what CI runs.
 ## Screenshots
 
 `docs/screenshots/` holds live-data captures (Discover, Library, Detail, light
-and dark) from `scripts/ci-screenshots.sh` run locally with a token. CI has no
-`TMDB_ACCESS_TOKEN` secret, so a `[screenshots]` push would replace them with
-the "Connect to TMDB" state; add the secret first
-(`gh secret set TMDB_ACCESS_TOKEN`).
+and dark). CI has a `TMDB_ACCESS_TOKEN` secret, so its smoke run uses live
+TMDB data too; put `[screenshots]` in a commit message (or run the workflow
+manually with *commit_screenshots*) to refresh them.
 
 ## Known follow-ups (optional, in rough priority)
 
