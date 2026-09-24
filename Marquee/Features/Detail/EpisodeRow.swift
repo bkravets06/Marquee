@@ -27,6 +27,8 @@ struct EpisodeRow: View {
             Button(action: onToggle) {
                 content
             }
+            // The default List button style tints the whole label with the accent.
+            .buttonStyle(.plain)
             .accessibilityHint(isWatched ? "Marks this episode as not watched." : "Marks episodes as watched through this one.")
         } else {
             content

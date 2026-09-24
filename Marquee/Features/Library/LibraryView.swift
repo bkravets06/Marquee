@@ -349,9 +349,11 @@ struct LibraryListView: View {
                     navigator.tab = emptyDestination
                 } label: {
                     Label(emptyButtonTitle, systemImage: emptyButtonSymbol)
+                        .labelStyle(.titleAndIcon)
                         .foregroundStyle(.onAccent)
                 }
                 .buttonStyle(.borderedProminent)
+                .fixedSize()
             }
         }
     }

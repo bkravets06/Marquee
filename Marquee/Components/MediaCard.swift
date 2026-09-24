@@ -60,6 +60,8 @@ struct MediaCard: View {
                 .lineLimit(1)
         }
         .frame(width: width, alignment: .leading)
+        // Fixed-width card; larger text breaks words apart.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .accessibilityElement(children: .combine)
     }
 }

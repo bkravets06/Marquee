@@ -21,6 +21,7 @@ struct LibraryRow: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(AppEnvironment.self) private var appEnvironment
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var isEditingCustomItem = false
 
     init(item: MediaItem, onMarked: (() -> Void)? = nil) {
@@ -54,25 +55,45 @@ struct LibraryRow: View {
 
     // MARK: Content
 
+    @ViewBuilder
     private var rowContent: some View {
-        HStack(alignment: .center, spacing: 12) {
-            PosterView(item: item, width: 56, cornerRadius: 8)
-            textBlock
-            Spacer(minLength: 8)
-            trailingButton
+        if dynamicTypeSize.isAccessibilitySize {
+            // Poster and button on top, text below at full width, so the
+            // title is not squeezed into a sliver at accessibility sizes.
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .center, spacing: 12) {
+                    PosterView(item: item, width: 56, cornerRadius: 8)
+                    Spacer(minLength: 8)
+                    trailingButton
+                }
+                textBlock
+            }
+            .padding(.vertical, 4)
+        } else {
+            HStack(alignment: .center, spacing: 12) {
+                PosterView(item: item, width: 56, cornerRadius: 8)
+                textBlock
+                Spacer(minLength: 8)
+                trailingButton
+            }
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
+    }
+
+    /// Line limit for the secondary lines; unlimited at accessibility sizes.
+    private var secondaryLineLimit: Int? {
+        dynamicTypeSize.isAccessibilitySize ? nil : 1
     }
 
     private var textBlock: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(item.title)
                 .font(.headline)
-                .lineLimit(2)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
             Text(subtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
+                .lineLimit(secondaryLineLimit)
             nextEpisodeLine
         }
         .accessibilityElement(children: .combine)
@@ -92,7 +113,7 @@ struct LibraryRow: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
-            .lineLimit(1)
+            .lineLimit(secondaryLineLimit)
         }
     }
 

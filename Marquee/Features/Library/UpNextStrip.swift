@@ -77,16 +77,19 @@ private struct UpNextCard: View {
         NavigationLink(value: LibraryRoute.item(item.id)) {
             VStack(alignment: .leading, spacing: 5) {
                 PosterView(item: item, width: UpNextStrip.posterWidth)
+                // One line keeps captions aligned across cards without the
+                // blank line a reserved second line leaves under short titles.
                 Text(item.title)
                     .font(.footnote.weight(.semibold))
-                    .lineLimit(2, reservesSpace: true)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
                 Text(caption)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             .frame(width: UpNextStrip.posterWidth, alignment: .leading)
+            // The card is a fixed 90 pt wide; larger text breaks words apart.
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)

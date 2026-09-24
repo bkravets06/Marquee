@@ -16,6 +16,7 @@ struct MediaDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var model: DetailModel
     @State private var isEditing = false
@@ -139,12 +140,9 @@ struct MediaDetailView: View {
     }
 
     private var backdrop: some View {
-        BackdropHeader(url: model.backdropURL, height: backdropHeight)
+        BackdropHeader(url: model.backdropURL, height: backdropHeight, fadeColor: Color(.systemGroupedBackground))
             .overlay(alignment: .top) {
                 topScrim
-            }
-            .overlay(alignment: .bottom) {
-                groupedFade
             }
     }
 
@@ -159,23 +157,15 @@ struct MediaDetailView: View {
         .allowsHitTesting(false)
     }
 
-    /// `BackdropHeader` fades into the plain system background; this page uses
-    /// the grouped background, so fade the last stretch into that instead.
-    private var groupedFade: some View {
-        LinearGradient(
-            stops: [
-                Gradient.Stop(color: Color(.systemGroupedBackground).opacity(0), location: 0),
-                Gradient.Stop(color: Color(.systemGroupedBackground), location: 1)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .frame(height: backdropHeight * 0.5)
-        .allowsHitTesting(false)
+    /// Side by side normally; poster above the title at accessibility sizes.
+    private var headerLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .bottom, spacing: 16))
     }
 
     private var headerRow: some View {
-        HStack(alignment: .bottom, spacing: 16) {
+        headerLayout {
             PosterView(url: model.posterURL, imageData: model.posterData, kind: model.kind, width: 110)
                 .padding(.top, -40)
                 .accessibilityHidden(true)
@@ -205,7 +195,7 @@ struct MediaDetailView: View {
     }
 
     private var metadataLine: some View {
-        HStack(spacing: 8) {
+        metadataLayout {
             KindBadge(kind: model.kind)
             if !model.metadataText.isEmpty {
                 Text(model.metadataText)
@@ -214,6 +204,13 @@ struct MediaDetailView: View {
         }
         .font(.subheadline)
         .foregroundStyle(.secondary)
+    }
+
+    /// One line normally; one item per line at accessibility sizes.
+    private var metadataLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 8))
     }
 
     // MARK: Actions row
@@ -683,20 +680,24 @@ private struct ProgressCardContent: View {
         }
     }
 
-    /// Side by side while both titles fit; stacked at larger text sizes.
+    /// Side by side while both titles fit on one line (Undo sized to its
+    /// label, Mark Next taking the rest); stacked at larger text sizes.
     private var buttons: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 12) {
-                buttonPair
+                markNextButton
+                    .lineLimit(1)
+                undoButton(fillsWidth: false)
+                    .lineLimit(1)
             }
             VStack(spacing: 12) {
-                buttonPair
+                markNextButton
+                undoButton(fillsWidth: true)
             }
         }
     }
 
-    @ViewBuilder
-    private var buttonPair: some View {
+    private var markNextButton: some View {
         Button(action: onMarkNext) {
             Label("Mark Next Watched", systemImage: "checkmark.circle")
                 .foregroundStyle(.onAccent)
@@ -704,9 +705,12 @@ private struct ProgressCardContent: View {
         }
         .buttonStyle(.borderedProminent)
         .disabled(!canMarkNext)
+    }
+
+    private func undoButton(fillsWidth: Bool) -> some View {
         Button(action: onUndo) {
             Label("Undo", systemImage: "arrow.uturn.backward")
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: fillsWidth ? .infinity : nil)
         }
         .buttonStyle(.bordered)
         .disabled(!item.progress.isStarted)

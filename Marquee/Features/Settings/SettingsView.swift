@@ -78,11 +78,12 @@ struct SettingsView: View {
         Section {
             LabeledContent("Status") {
                 if appEnvironment.hasCredentials {
-                    Label {
-                        Text("Connected")
-                    } icon: {
+                    // A Label here lays out with a tall blank area on iOS 27.
+                    HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
+                            .accessibilityHidden(true)
+                        Text("Connected")
                     }
                 } else {
                     Text("Not Connected")
