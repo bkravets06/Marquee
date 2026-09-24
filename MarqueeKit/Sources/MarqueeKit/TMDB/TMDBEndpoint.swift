@@ -80,6 +80,18 @@ struct TMDBEndpoint: Hashable, Sendable {
         TMDBEndpoint(path: "/movie/\(id)")
     }
 
+    // MARK: Watch providers
+
+    /// GET /tv/{id}/watch/providers or /movie/{id}/watch/providers
+    static func watchProviders(id: Int, kind: MediaKind) -> TMDBEndpoint {
+        let segment: String
+        switch kind {
+        case .show: segment = "tv"
+        case .movie: segment = "movie"
+        }
+        return TMDBEndpoint(path: "/\(segment)/\(id)/watch/providers")
+    }
+
     // MARK: Helpers
 
     private static func pageItem(_ page: Int) -> URLQueryItem {

@@ -169,6 +169,15 @@ public actor TMDBClient {
         try await fetch(MovieDetails.self, from: .movieDetails(id: id))
     }
 
+    // MARK: Watch providers
+
+    /// `GET /tv/{id}/watch/providers` or `GET /movie/{id}/watch/providers`: where the title can be
+    /// streamed, rented or bought in every region TMDB knows. The data comes from JustWatch, which
+    /// must be credited wherever it is shown; `RegionWatchProviders.link` carries that attribution.
+    public func watchProviders(id: Int, kind: MediaKind) async throws -> WatchProviders {
+        try await fetch(WatchProviders.self, from: .watchProviders(id: id, kind: kind))
+    }
+
     // MARK: Request building
 
     /// Builds the `URLRequest` for `endpoint`: base URL + path, endpoint query items plus `language`

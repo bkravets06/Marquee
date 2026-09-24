@@ -64,6 +64,16 @@ final class RequestBuildingTests: XCTestCase {
         XCTAssertEqual(TestSupport.path(of: client.makeRequest(.authentication)), "/3/authentication")
     }
 
+    func testWatchProviderPaths() {
+        let client = TestSupport.makeClient(region: "GB")
+        let show = client.makeRequest(.watchProviders(id: 95396, kind: .show))
+        XCTAssertEqual(TestSupport.path(of: show), "/3/tv/95396/watch/providers")
+        XCTAssertNil(TestSupport.query(of: show)["region"], "every region comes back in one response")
+        XCTAssertEqual(TestSupport.query(of: show)["language"], "en-US")
+        let movie = client.makeRequest(.watchProviders(id: 693134, kind: .movie))
+        XCTAssertEqual(TestSupport.path(of: movie), "/3/movie/693134/watch/providers")
+    }
+
     func testPageIsClampedToAtLeastOne() {
         let client = TestSupport.makeClient()
         XCTAssertEqual(TestSupport.query(of: client.makeRequest(.tvList("popular", page: 0)))["page"], "1")
@@ -180,6 +190,19 @@ final class RequestBuildingTests: XCTestCase {
     }
 
     // MARK: End-to-end through the public API
+
+    func testWatchProvidersSendExpectedRequests() async throws {
+        let recorder = RequestRecorder()
+        let movieClient = try TestSupport.makeClient(fixture: "movie_watch_providers", recorder: recorder)
+        _ = try await movieClient.watchProviders(id: 693134, kind: .movie)
+        XCTAssertEqual(TestSupport.path(of: recorder.last), "/3/movie/693134/watch/providers")
+        XCTAssertEqual(recorder.last?.value(forHTTPHeaderField: "Authorization")?.hasPrefix("Bearer "), true)
+
+        let showClient = try TestSupport.makeClient(fixture: "tv_watch_providers", recorder: recorder)
+        _ = try await showClient.watchProviders(id: 95396, kind: .show)
+        XCTAssertEqual(TestSupport.path(of: recorder.last), "/3/tv/95396/watch/providers")
+        XCTAssertEqual(recorder.requests.count, 2)
+    }
 
     func testPublicMethodsSendExpectedRequests() async throws {
         let recorder = RequestRecorder()
