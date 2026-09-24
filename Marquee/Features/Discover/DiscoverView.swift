@@ -96,7 +96,7 @@ struct DiscoverView: View {
             Button {
                 isShowingSettings = true
             } label: {
-                Text("Open Settings").foregroundStyle(.black)
+                Text("Open Settings").foregroundStyle(.onAccent)
             }
             .buttonStyle(.borderedProminent)
         }
@@ -113,7 +113,7 @@ struct DiscoverView: View {
                     await refresh()
                 }
             } label: {
-                Text("Retry").foregroundStyle(.black)
+                Text("Retry").foregroundStyle(.onAccent)
             }
             .buttonStyle(.borderedProminent)
         }

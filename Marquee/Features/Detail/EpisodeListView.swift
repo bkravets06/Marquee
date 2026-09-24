@@ -128,7 +128,7 @@ struct EpisodeListView: View {
                     Button {
                         loadAttempt += 1
                     } label: {
-                        Text("Try Again").foregroundStyle(.black)
+                        Text("Try Again").foregroundStyle(.onAccent)
                     }
                     .buttonStyle(.borderedProminent)
                 }

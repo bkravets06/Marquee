@@ -160,7 +160,7 @@ struct TokenEntryView: View {
                     Text("Validate & Save")
                 }
                 .frame(maxWidth: .infinity)
-                .foregroundStyle(.black)
+                .foregroundStyle(.onAccent)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)

@@ -91,7 +91,7 @@ struct StatusMenu: View {
                     .fontWeight(.bold)
             } else {
                 Label("Add to Library", systemImage: "plus")
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.onAccent)
             }
         }
         .font(.body.weight(.semibold))

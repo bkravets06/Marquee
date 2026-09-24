@@ -92,7 +92,7 @@ struct SearchView: View {
             Button {
                 isShowingSettings = true
             } label: {
-                Text("Open Settings").foregroundStyle(.black)
+                Text("Open Settings").foregroundStyle(.onAccent)
             }
             .buttonStyle(.borderedProminent)
             Button("Add a Custom Title") {
@@ -281,7 +281,7 @@ private struct SearchResultsList: View {
             Text("Check the spelling or try a new search.")
         } actions: {
             Button(action: onAddCustom) {
-                Text(addCustomTitle).foregroundStyle(.black)
+                Text(addCustomTitle).foregroundStyle(.onAccent)
             }
             .buttonStyle(.borderedProminent)
         }
@@ -294,7 +294,7 @@ private struct SearchResultsList: View {
             Text(message)
         } actions: {
             Button(action: retry) {
-                Text("Retry").foregroundStyle(.black)
+                Text("Retry").foregroundStyle(.onAccent)
             }
             .buttonStyle(.borderedProminent)
         }

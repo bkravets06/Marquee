@@ -349,7 +349,7 @@ struct LibraryListView: View {
                     navigator.tab = emptyDestination
                 } label: {
                     Label(emptyButtonTitle, systemImage: emptyButtonSymbol)
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.onAccent)
                 }
                 .buttonStyle(.borderedProminent)
             }

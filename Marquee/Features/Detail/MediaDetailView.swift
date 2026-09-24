@@ -403,14 +403,14 @@ struct MediaDetailView: View {
                 Button {
                     isShowingSettings = true
                 } label: {
-                    Text("Open Settings").foregroundStyle(.black)
+                    Text("Open Settings").foregroundStyle(.onAccent)
                 }
                 .buttonStyle(.borderedProminent)
             } else if !model.isMissingLibraryItem {
                 Button {
                     Task { await load() }
                 } label: {
-                    Text("Try Again").foregroundStyle(.black)
+                    Text("Try Again").foregroundStyle(.onAccent)
                 }
                 .buttonStyle(.borderedProminent)
             }
@@ -699,7 +699,7 @@ private struct ProgressCardContent: View {
     private var buttonPair: some View {
         Button(action: onMarkNext) {
             Label("Mark Next Watched", systemImage: "checkmark.circle")
-                .foregroundStyle(.black)
+                .foregroundStyle(.onAccent)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)

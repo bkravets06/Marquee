@@ -133,7 +133,7 @@ struct SeeAllView: View {
                     await refresh()
                 }
             } label: {
-                Text("Retry").foregroundStyle(.black)
+                Text("Retry").foregroundStyle(.onAccent)
             }
             .buttonStyle(.borderedProminent)
         }
