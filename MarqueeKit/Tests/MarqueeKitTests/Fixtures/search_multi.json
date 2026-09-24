@@ -1,0 +1,69 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/kJoTfFHLn3mFGqo0AqECbdCbz5J.jpg",
+      "id": 95396,
+      "name": "Severance",
+      "original_language": "en",
+      "original_name": "Severance",
+      "overview": "Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives. When a mysterious colleague appears outside of work, it begins a journey to discover the truth about their jobs.",
+      "poster_path": "/lFf6LLrQjYldcZItzOkGmMMigP7.jpg",
+      "media_type": "tv",
+      "genre_ids": [18, 9648, 10765],
+      "popularity": 612.348,
+      "first_air_date": "2022-02-17",
+      "vote_average": 8.4,
+      "vote_count": 2310,
+      "origin_country": ["US"]
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "id": 1272,
+      "title": "Severance",
+      "original_language": "en",
+      "original_title": "Severance",
+      "overview": "A team-building weekend in the mountains of Eastern Europe goes horribly wrong for the sales division of the multi-national weapons company Palisade Defence.",
+      "poster_path": "/qBjQT2ZaT8dXlQ5nZMdjFM7jbC3.jpg",
+      "media_type": "movie",
+      "genre_ids": [27, 35],
+      "popularity": 14.221,
+      "release_date": "2006-08-25",
+      "video": false,
+      "vote_average": 6.3,
+      "vote_count": 512
+    },
+    {
+      "adult": false,
+      "id": 1245,
+      "name": "Adam Scott",
+      "original_name": "Adam Scott",
+      "media_type": "person",
+      "popularity": 41.317,
+      "gender": 2,
+      "known_for_department": "Acting",
+      "profile_path": "/5gb65xz8bzd42yjMAl4zwo4cvKw.jpg",
+      "known_for": []
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "id": 231422,
+      "name": "Severance Package",
+      "original_language": "en",
+      "original_name": "Severance Package",
+      "poster_path": null,
+      "media_type": "tv",
+      "genre_ids": [],
+      "popularity": 1.4,
+      "first_air_date": "",
+      "vote_average": 0,
+      "vote_count": 0,
+      "origin_country": []
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 4
+}

@@ -1,0 +1,139 @@
+{
+  "adult": false,
+  "backdrop_path": "/kJoTfFHLn3mFGqo0AqECbdCbz5J.jpg",
+  "created_by": [
+    {
+      "id": 2183296,
+      "credit_id": "5f7e1b9f0e0a2600392ac8e1",
+      "name": "Dan Erickson",
+      "gender": 2,
+      "profile_path": null
+    }
+  ],
+  "episode_run_time": [],
+  "first_air_date": "2022-02-17",
+  "genres": [
+    { "id": 18, "name": "Drama" },
+    { "id": 9648, "name": "Mystery" },
+    { "id": 10765, "name": "Sci-Fi & Fantasy" }
+  ],
+  "homepage": "https://tv.apple.com/show/severance/umc.cmc.1srk2goyh2q2zdxcx605w8vtx",
+  "id": 95396,
+  "in_production": true,
+  "languages": ["en"],
+  "last_air_date": "2025-03-21",
+  "last_episode_to_air": {
+    "id": 5859374,
+    "name": "Cold Harbor",
+    "overview": "Mark and Helly race to finish Cold Harbor while the truth about Lumon's testing floor comes to light.",
+    "vote_average": 9.1,
+    "vote_count": 214,
+    "air_date": "2025-03-21",
+    "episode_number": 10,
+    "episode_type": "finale",
+    "production_code": "",
+    "runtime": 76,
+    "season_number": 2,
+    "show_id": 95396,
+    "still_path": "/pJ3O5yFy5XyTXFxoNz8fWy4wD6i.jpg"
+  },
+  "name": "Severance",
+  "next_episode_to_air": {
+    "id": 6231881,
+    "name": "",
+    "overview": "",
+    "vote_average": 0,
+    "vote_count": 0,
+    "air_date": "2026-10-02",
+    "episode_number": 1,
+    "episode_type": "standard",
+    "production_code": "",
+    "runtime": null,
+    "season_number": 3,
+    "show_id": 95396,
+    "still_path": null
+  },
+  "networks": [
+    {
+      "id": 2552,
+      "logo_path": "/4KAy34EHvRM25Ih8wb82AuGU7zJ.png",
+      "name": "Apple TV+",
+      "origin_country": "US"
+    }
+  ],
+  "number_of_episodes": 19,
+  "number_of_seasons": 2,
+  "origin_country": ["US"],
+  "original_language": "en",
+  "original_name": "Severance",
+  "overview": "Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives. When a mysterious colleague appears outside of work, it begins a journey to discover the truth about their jobs.",
+  "popularity": 612.348,
+  "poster_path": "/lFf6LLrQjYldcZItzOkGmMMigP7.jpg",
+  "production_companies": [
+    {
+      "id": 132214,
+      "logo_path": null,
+      "name": "Red Hour Productions",
+      "origin_country": "US"
+    },
+    {
+      "id": 143069,
+      "logo_path": null,
+      "name": "Fifth Season",
+      "origin_country": "US"
+    }
+  ],
+  "production_countries": [
+    { "iso_3166_1": "US", "name": "United States of America" }
+  ],
+  "seasons": [
+    {
+      "air_date": "2022-04-05",
+      "episode_count": 3,
+      "id": 271437,
+      "name": "Specials",
+      "overview": "",
+      "poster_path": null,
+      "season_number": 0,
+      "vote_average": 0
+    },
+    {
+      "air_date": "2022-02-17",
+      "episode_count": 9,
+      "id": 138296,
+      "name": "Season 1",
+      "overview": "",
+      "poster_path": "/5ZUFjeGiY6XIIWuXVvDgUzw3C6Y.jpg",
+      "season_number": 1,
+      "vote_average": 8.2
+    },
+    {
+      "air_date": "2025-01-16",
+      "episode_count": 10,
+      "id": 386040,
+      "name": "Season 2",
+      "overview": "",
+      "poster_path": "/lFf6LLrQjYldcZItzOkGmMMigP7.jpg",
+      "season_number": 2,
+      "vote_average": 8.6
+    },
+    {
+      "air_date": null,
+      "episode_count": 0,
+      "id": 442917,
+      "name": "Season 3",
+      "overview": "",
+      "poster_path": null,
+      "season_number": 3,
+      "vote_average": 0
+    }
+  ],
+  "spoken_languages": [
+    { "english_name": "English", "iso_639_1": "en", "name": "English" }
+  ],
+  "status": "Returning Series",
+  "tagline": "Be a team player.",
+  "type": "Scripted",
+  "vote_average": 8.4,
+  "vote_count": 2310
+}

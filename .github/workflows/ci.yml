@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          echo "Available Xcodes:"
+          ls /Applications | grep Xcode || true
+          NEWEST="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1 || true)"
+          if [ -n "$NEWEST" ]; then
+            echo "Selecting $NEWEST"
+            sudo xcode-select -s "$NEWEST"
+          else
+            echo "No Xcode_26* found; using the runner default."
+          fi
+          xcodebuild -version
+          swift --version
+
+      - name: Package tests
+        run: |
+          set -o pipefail
+          swift test --package-path MarqueeKit 2>&1 | tee package-test.log
+
+      - name: Pick simulator
+        run: |
+          set -o pipefail
+          xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+
+          data = json.load(sys.stdin)
+          phones = []
+          for runtime, devices in data.get("devices", {}).items():
+              if "iOS" not in runtime:
+                  continue
+              for device in devices:
+                  name = device.get("name", "")
+                  if device.get("isAvailable", True) and name.startswith("iPhone"):
+                      phones.append((runtime, name, device["udid"]))
+
+          def rank(entry):
+              name = entry[1]
+              if name.startswith("iPhone 17"):
+                  return 0
+              if name.startswith("iPhone 16"):
+                  return 1
+              return 2
+
+          if not phones:
+              sys.stderr.write("No available iPhone simulator found.\n")
+              sys.exit(1)
+
+          phones.sort(key=rank)
+          runtime, name, udid = phones[0]
+          print(f"Using simulator: {name} ({runtime}) {udid}", file=sys.stderr)
+          print(f"SIM_UDID={udid}")
+          ' >> "$GITHUB_ENV"
+          grep SIM_UDID "$GITHUB_ENV" || { echo "Failed to pick a simulator."; exit 1; }
+
+      - name: Build and test app
+        run: |
+          set -o pipefail
+          BUILD_CMD=(xcodebuild
+            -project Marquee.xcodeproj
+            -scheme Marquee
+            -destination "platform=iOS Simulator,id=$SIM_UDID"
+            -skipPackagePluginValidation
+            -skipMacroValidation
+            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_REQUIRED=NO
+            ONLY_ACTIVE_ARCH=YES
+            -derivedDataPath DerivedData
+            build test)
+          if command -v xcbeautify >/dev/null 2>&1; then
+            "${BUILD_CMD[@]}" 2>&1 | tee xcodebuild.log | xcbeautify --renderer github-actions
+          else
+            echo "xcbeautify not found; showing raw xcodebuild output."
+            "${BUILD_CMD[@]}" 2>&1 | tee xcodebuild.log
+          fi
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-logs
+          path: |
+            xcodebuild.log
+            package-test.log
+          if-no-files-found: ignore

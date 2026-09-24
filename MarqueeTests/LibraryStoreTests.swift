@@ -25,16 +25,18 @@ final class LibraryStoreTests: XCTestCase {
         return LibraryStore(context: container.mainContext)
     }
 
+    /// Inserts a TMDB show. `seasons` defaults to `twoSeasons` when `nil`
+    /// (resolved inside the body so the default argument stays isolation-free).
     @discardableResult
     private func makeShow(
         in store: LibraryStore,
         status: WatchStatus,
         tmdbID: Int = 1,
         title: String = "Test Show",
-        seasons: [SeasonInfo] = LibraryStoreTests.twoSeasons
+        seasons: [SeasonInfo]? = nil
     ) -> MediaItem {
         let item = MediaItem(kind: .show, status: status, title: title, tmdbID: tmdbID)
-        item.seasons = seasons
+        item.seasons = seasons ?? LibraryStoreTests.twoSeasons
         store.context.insert(item)
         store.save()
         return item

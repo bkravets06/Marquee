@@ -16,7 +16,7 @@ public enum TMDBError: Error, LocalizedError, Sendable, Equatable {
     case http(status: Int, message: String?)
     /// The response body could not be decoded.
     case decoding(String)
-    /// The request never produced a response (URLError and friends).
+    /// The request never produced a response (no connectivity, timeouts and similar transport failures).
     case network(String)
 
     // MARK: LocalizedError

@@ -183,7 +183,7 @@ struct RawMultiResult: Codable, Sendable {
 
     /// The kind this row maps to, or `nil` for people and unknown media types.
     var kind: MediaKind? {
-        switch mediaType {
+        switch mediaType ?? "" {
         case "tv": return .show
         case "movie": return .movie
         default: return nil
