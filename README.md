@@ -17,14 +17,12 @@
 
 ## Screenshots
 
-Captured by CI in the iPhone 17 Pro simulator (iOS 26).
+Captured in the iPhone 17 Pro simulator with live TMDB data.
 
-<p>
-  <img src="docs/screenshots/onboarding.png" width="200" alt="Onboarding">
-  <img src="docs/screenshots/library.png" width="200" alt="Library with Up Next and progress rows">
-  <img src="docs/screenshots/detail.png" width="200" alt="Detail with progress card">
-  <img src="docs/screenshots/library-dark.png" width="200" alt="Library in dark mode">
-</p>
+| Discover | Library | Detail |
+| --- | --- | --- |
+| ![Discover](docs/screenshots/discover.png) | ![Library with Up Next and progress rows](docs/screenshots/library.png) | ![Detail with next episode](docs/screenshots/detail.png) |
+| ![Discover in dark mode](docs/screenshots/discover-dark.png) | ![Library in dark mode](docs/screenshots/library-dark.png) | ![Detail in dark mode](docs/screenshots/detail-dark.png) |
 
 ## Requirements
 

@@ -1,9 +1,9 @@
 # Handoff: continuing Marquee in a local session
 
 This project was built in a cloud session that had no Xcode, no simulator and
-no TMDB token. Everything compiles and tests green on CI, but **no human has
-run the app yet**. The next session runs on a Mac with Xcode and should treat
-"run it, verify it, polish what a real device reveals" as its job.
+no TMDB token. A local session on 2026-09-24 (Xcode 27, iOS 27 simulators,
+live TMDB token) then ran the app and walked the checklist below; results are
+under *Verification results*. What is left needs a physical device.
 
 ## Where things stand
 
@@ -82,29 +82,52 @@ Fix what you find with minimal, targeted changes; keep the conventions in
 `CLAUDE.md`; run `swift test --package-path MarqueeKit` and the Xcode tests;
 commit in small steps and push (CI is the shared source of truth).
 
-## Already confirmed from the CI simulator screenshots
+## Verification results (local session, 2026-09-24)
 
-The smoke run at commit 5c24f2a launched the app seven times without a
-crash (see `docs/screenshots/`). These items from the list above are done:
+Driven with XCUITest from a scratch project (not in the repo) on an iPhone 17
+Pro and an iPad Pro 11-inch simulator, light and dark, default and largest
+accessibility text size, with a live TMDB token.
 
-- Onboarding renders, including the `sparkles.tv` symbol.
-- The Search tab uses the native iOS 26 search presentation.
-- The Library → detail deep link (`Navigator.open`) pushes correctly.
-- Posters load from TMDB's image CDN; dark mode is correct.
-- Discover and Search show their connect state when no token is present
-  (CI had no `TMDB_ACCESS_TOKEN` secret), with a working Open Settings button.
+Confirmed working as written:
 
-Visual nits seen in those screenshots, worth fixing first:
+- Library segments switch without stale rows; no `.id(selectedStatus)` needed.
+- Seasons → episode list pushes and pops cleanly inside the Library stack,
+  repeatedly.
+- Detail navigation bar fades in over the backdrop on scroll, light and dark.
+- `sparkles.tv` renders in onboarding.
+- Search tab (`Tab(role: .search)`) presents natively; All/Shows/Movies scopes
+  filter; no-results state offers "Add as Custom Title".
+- Discover carousels and See All load; detail → Add to Library → Watching.
+- Notifications: permission prompt on the reminders toggle; pending count 1;
+  changing the reminder time keeps it at 1; a custom weekly show adds one
+  (2). A notification carrying `itemID` (sent with `xcrun simctl push`) opens
+  that show's detail when tapped.
+- The spinner in onboarding's Validate & Save is visible while validating;
+  a valid token saves and onboarding advances.
+- Empty states for all three segments, the no-token connect state (Open
+  Settings works) and the rejected-key error state with Retry.
+- iPad landscape: top tab bar, readable-width detail, seasons, search.
 
-1. **Detail progress card:** "Mark Next Watched" wraps onto two lines at the
-   default text size because the two buttons split the width evenly. Let the
-   primary button take the remaining width and make Undo hug its content
-   (or shorten the label), while keeping the vertical fallback for large
-   Dynamic Type sizes (`Marquee/Features/Detail/MediaDetailView.swift`).
-2. **Up Next card:** there is a blank line between the title and the
-   "Sat · S2 E5" caption, probably a two-line reserved title. Use a single
-   line title or drop the reserved space
-   (`Marquee/Features/Library/UpNextStrip.swift`).
+Fixed in commit aa5656f (see its message): accent-tinted episode rows, the
+collapsed Library empty-state button, a blank gap under Settings' TMDB status,
+the wrapping Mark Next button, the Up Next blank line, and layouts at
+accessibility text sizes.
+
+Not verifiable in the simulator; check on a device:
+
+- **Background refresh.** `BGTaskScheduler.submit` fails in the simulator, so
+  `_simulateLaunchForTaskWithIdentifier` does nothing there. On a device,
+  background the app, pause in the debugger, run the command below, resume,
+  and look for "Background refresh started/finished" (subsystem
+  `com.bjkravets.marquee`, category `BackgroundRefresh`).
+- **A real local reminder firing** at the reminder time (the tap path was
+  verified with a pushed notification).
+- **Wi-Fi off.** The simulator shares the Mac's network; the error rows were
+  checked with a rejected key, which uses the same inline retry UI.
+
+Note: unsigned builds (`CODE_SIGNING_ALLOWED=NO`) cannot write to the
+Keychain (`errSecMissingEntitlement`, -34018), so saving a key fails there.
+Xcode's normal Run signs ad hoc and works.
 
 ## Debug launch arguments (Debug builds only)
 
@@ -118,11 +141,13 @@ Visual nits seen in those screenshots, worth fixing first:
 `scripts/ci-screenshots.sh <udid> <path/to/Marquee.app> [out-dir]` drives a
 booted simulator through these and writes PNGs; it is what CI runs.
 
-## Then: screenshots and README
+## Screenshots
 
-Once the screens look right, capture Discover, Library and Detail (light and
-dark), put them in `docs/screenshots/`, and replace the placeholder in the
-README's *Screenshots* section (a commented-out table is already there).
+`docs/screenshots/` holds live-data captures (Discover, Library, Detail, light
+and dark) from `scripts/ci-screenshots.sh` run locally with a token. CI has no
+`TMDB_ACCESS_TOKEN` secret, so a `[screenshots]` push would replace them with
+the "Connect to TMDB" state; add the secret first
+(`gh secret set TMDB_ACCESS_TOKEN`).
 
 ## Known follow-ups (optional, in rough priority)
 
@@ -130,11 +155,5 @@ README's *Screenshots* section (a commented-out table is already there).
    owner agrees (`git branch -m main && git push -u origin main`, then
    Settings → Branches).
 2. Add a LICENSE (owner's choice) and a README *License* section.
-3. `NotificationManager` has no `cancelAll()`; `SettingsView` talks to
-   `UNUserNotificationCenter` directly for Delete All Data. Adding
-   `cancelAll()` keeps the manager as the single entry point.
-4. `BackdropHeader` fades into `systemBackground` while the detail page uses
-   `systemGroupedBackground`; `MediaDetailView` overlays a second gradient.
-   A `fadeColor` parameter on `BackdropHeader` would be cleaner.
-5. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import,
+3. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import,
    watch providers.

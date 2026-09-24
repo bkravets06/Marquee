@@ -66,6 +66,7 @@ shoot search 10 "${SKIP_ONBOARDING[@]}" -marquee.initialTab search
 xcrun simctl ui "$UDID" appearance dark || true
 shoot library-dark 10 "${SKIP_ONBOARDING[@]}" "${SEED[@]}" -marquee.initialTab library
 shoot discover-dark 14 "${SKIP_ONBOARDING[@]}" -marquee.initialTab discover
+shoot detail-dark 14 "${SKIP_ONBOARDING[@]}" "${SEED[@]}" -marquee.openSeededItem YES
 
 xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 xcrun simctl ui "$UDID" appearance light || true
