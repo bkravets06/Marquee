@@ -58,14 +58,17 @@ enum BackgroundRefresh {
         // Queue the next run first so a crash or expiration does not break the cycle.
         schedule()
 
+        logger.notice("Background refresh started")
         let work = Task { @MainActor in
             let refresher = LibraryRefresher(environment: environment, context: container.mainContext)
             await refresher.refreshAll(force: false)
             guard !Task.isCancelled else { return }
+            logger.notice("Background refresh finished")
             refreshTask.setTaskCompleted(success: true)
         }
 
         refreshTask.expirationHandler = {
+            logger.notice("Background refresh expired")
             work.cancel()
             refreshTask.setTaskCompleted(success: false)
         }
