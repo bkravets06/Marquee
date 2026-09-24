@@ -1,5 +1,11 @@
 # Marquee — notes for coding sessions
 
+## Picking up in a new session
+
+Read `docs/HANDOFF.md` first. It records what is finished, what still needs
+to be verified on a real simulator or device, the debug launch arguments,
+and the open follow-ups.
+
 ## What this is
 
 Marquee is a native iOS app (SwiftUI + SwiftData, iOS 18+, Swift 5 language mode) that tracks the shows and movies a person is watching. It uses TMDB as its catalog API and schedules local notifications for new episodes. No server, no accounts, no third-party dependencies.
