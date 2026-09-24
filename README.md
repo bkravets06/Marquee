@@ -95,3 +95,7 @@ Continuous integration runs both on every push and pull request; see [`.github/w
 This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 Marquee is an independent project and is not affiliated with, endorsed by or sponsored by Apple Inc. Apple, iOS, iPad, Xcode and SF Symbols are trademarks of Apple Inc.
+
+## License
+
+Marquee is released under the [MIT License](LICENSE). TMDB data and images are subject to TMDB's own terms of use.

@@ -151,6 +151,5 @@ the "Connect to TMDB" state; add the secret first
 
 ## Known follow-ups (optional, in rough priority)
 
-1. Add a LICENSE (owner's choice) and a README *License* section.
-2. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import,
+1. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import,
    watch providers.
