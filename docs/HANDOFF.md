@@ -3,7 +3,7 @@
 This project was built in a cloud session that had no Xcode, no simulator and
 no TMDB token. A local session on 2026-09-24 (Xcode 27, iOS 27 simulators,
 live TMDB token) then ran the app and walked the checklist below; results are
-under *Verification results*. What is left needs a physical device.
+under *Verification results*, including the checks done on a physical device.
 
 ## Where things stand
 
@@ -113,17 +113,24 @@ collapsed Library empty-state button, a blank gap under Settings' TMDB status,
 the wrapping Mark Next button, the Up Next blank line, and layouts at
 accessibility text sizes.
 
-Not verifiable in the simulator; check on a device:
+Verified on a device (iPhone 16 Pro Max, iOS 27, Debug build, same day):
 
-- **Background refresh.** `BGTaskScheduler.submit` fails in the simulator, so
-  `_simulateLaunchForTaskWithIdentifier` does nothing there. On a device,
-  background the app, pause in the debugger, run the command below, resume,
-  and look for "Background refresh started/finished" (subsystem
-  `com.bjkravets.marquee`, category `BackgroundRefresh`).
-- **A real local reminder firing** at the reminder time (the tap path was
-  verified with a pushed notification).
-- **Wi-Fi off.** The simulator shares the Mac's network; the error rows were
-  checked with a rejected key, which uses the same inline retry UI.
+- **Background refresh.** With a refresh request submitted and
+  `_simulateLaunchForTaskWithIdentifier` run from lldb, the handler runs on
+  the `com.apple.BGTaskScheduler (com.bjkravets.marquee.refresh)` queue and
+  reaches "Background refresh finished" after the library refresh. (The
+  simulator cannot run BGTaskScheduler at all.)
+- **A real reminder** for a custom weekly show fired at the set time, and
+  tapping it cold-launched the app straight into that show.
+- **Offline.** Refreshing Discover in Airplane Mode keeps the content already
+  loaded; everything reloads once the network is back.
+
+To run on a device from the command line (team ID stays out of the project):
+`xcodebuild ... -destination "platform=iOS,id=<udid>" DEVELOPMENT_TEAM=<team> -allowProvisioningUpdates build`,
+then `xcrun devicectl device install app` and
+`DEVICECTL_CHILD_TMDB_ACCESS_TOKEN=... xcrun devicectl device process launch --device <udid> com.bjkravets.marquee -- <launch arguments>`
+(note the `--` before the app's arguments). Attaching lldb to a device app
+takes about a minute; if an lldb batch script stops on an error it kills the app.
 
 Note: unsigned builds (`CODE_SIGNING_ALLOWED=NO`) cannot write to the
 Keychain (`errSecMissingEntitlement`, -34018), so saving a key fails there.
