@@ -10,6 +10,7 @@
 
 - **Discover.** Browse what's trending today, shows airing tonight and this week, movies in theaters and coming soon, and the most popular titles, all powered by [TMDB](https://www.themoviedb.org).
 - **Search anything.** Find any show or movie ever aired, filter by type, and add it to your library in one tap.
+- **Where to watch.** Every show and movie screen lists the streaming, rental and purchase options for your region, with a link to the full list on TMDB (data from JustWatch).
 - **Your library.** Sort titles into *Watching*, *Watchlist* and *Watched*, and track per-episode progress for every show, season by season.
 - **Up Next and reminders.** See which of your shows have a new episode this week and get a local notification the day it airs. Reminders refresh quietly in the background.
 - **Custom titles.** Track things TMDB does not know about, such as a YouTube series or a course, with your own poster, link, notes and a weekly reminder schedule.
@@ -88,11 +89,10 @@ Continuous integration runs both on every push and pull request; see [`.github/w
 - Home Screen and Lock Screen widgets for Up Next
 - iCloud sync across devices
 - Import history from Trakt
-- Where-to-watch providers on the detail screen
 
 ## Attribution
 
-This product uses the TMDB API but is not endorsed or certified by TMDB.
+This product uses the TMDB API but is not endorsed or certified by TMDB. Where to Watch availability data is provided by JustWatch.
 
 Marquee is an independent project and is not affiliated with, endorsed by or sponsored by Apple Inc. Apple, iOS, iPad, Xcode and SF Symbols are trademarks of Apple Inc.
 
