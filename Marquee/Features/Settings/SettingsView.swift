@@ -341,27 +341,13 @@ struct SettingsView: View {
 
     private func deleteAllData() {
         Task {
-            await cancelAllReminders()
+            await appEnvironment.notifications.cancelAll()
             let store = LibraryStore(context: modelContext)
             store.deleteAll()
             loadCounts()
             pendingCount = await appEnvironment.notifications.pendingCount()
             feedbackCount += 1
         }
-    }
-
-    /// Removes every pending Marquee reminder, whether or not notifications are
-    /// currently authorized.
-    private func cancelAllReminders() async {
-        let center = UNUserNotificationCenter.current()
-        let pending = await center.pendingNotificationRequests()
-        let identifiers = pending
-            .map { $0.identifier }
-            .filter { NotificationManager.isMarqueeIdentifier($0) }
-        if !identifiers.isEmpty {
-            center.removePendingNotificationRequests(withIdentifiers: identifiers)
-        }
-        center.removeAllDeliveredNotifications()
     }
 }
 

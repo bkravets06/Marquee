@@ -510,7 +510,7 @@ Used by `#Preview` blocks and tests.
   `EpisodeReminder`; one repeating request per custom show with
   `notificationsEnabled` and a `releaseSchedule`), removes pending Marquee
   requests that are no longer desired, adds missing ones. `userInfo["itemID"] = item.id.uuidString`.
-  `func cancel(for item: MediaItem)`, `func pendingCount() async -> Int`.
+  `func cancel(for item: MediaItem)`, `func cancelAll() async` (every pending Marquee reminder plus delivered ones; used by Delete All Data), `func pendingCount() async -> Int`.
 * `LibraryRefresher` (`@MainActor`): `init(environment:, context:)`,
   `func refreshAll(force: Bool) async` — for `showsNeedingRefresh(olderThan: 6h)`
   fetch `showDetails`, `store.apply`, then `notifications.sync`. Records

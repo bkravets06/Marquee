@@ -111,6 +111,20 @@ final class NotificationManager {
         }
     }
 
+    /// Removes every pending Marquee reminder and clears delivered ones,
+    /// whether or not notifications are currently authorized.
+    func cancelAll() async {
+        let center = UNUserNotificationCenter.current()
+        let pending = await center.pendingNotificationRequests()
+        let identifiers = pending
+            .map { $0.identifier }
+            .filter { NotificationManager.isMarqueeIdentifier($0) }
+        if !identifiers.isEmpty {
+            center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        }
+        center.removeAllDeliveredNotifications()
+    }
+
     /// Number of pending requests that belong to Marquee.
     func pendingCount() async -> Int {
         let pending = await UNUserNotificationCenter.current().pendingNotificationRequests()
