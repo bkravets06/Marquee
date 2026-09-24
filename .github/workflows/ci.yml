@@ -36,6 +36,8 @@ jobs:
           swift --version
 
       - name: Package tests
+        id: package_tests
+        continue-on-error: true
         run: |
           set -o pipefail
           swift test --package-path MarqueeKit 2>&1 | tee package-test.log
@@ -95,6 +97,12 @@ jobs:
             echo "xcbeautify not found; showing raw xcodebuild output."
             "${BUILD_CMD[@]}" 2>&1 | tee xcodebuild.log
           fi
+
+      - name: Fail if package tests failed
+        if: steps.package_tests.outcome == 'failure'
+        run: |
+          echo "::error::MarqueeKit package tests failed (see the 'Package tests' step)."
+          exit 1
 
       - name: Upload logs
         if: always()
