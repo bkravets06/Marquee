@@ -1,0 +1,197 @@
+{
+  "id": 693134,
+  "results": {
+    "CA": {
+      "link": "https://www.themoviedb.org/movie/693134-dune-part-two/watch?locale=CA",
+      "flatrate": [
+        {
+          "logo_path": "/8VCV78prwd9QzZnEm0ReO6bERDa.jpg",
+          "provider_id": 230,
+          "provider_name": "Crave",
+          "display_priority": 2
+        }
+      ],
+      "rent": [
+        {
+          "logo_path": "/9ghgSC0MA082EL6HLCW3GalykFD.jpg",
+          "provider_id": 2,
+          "provider_name": "Apple TV",
+          "display_priority": 3
+        },
+        {
+          "logo_path": "/seGSXajazLMCKGB5hnRCidtjay1.jpg",
+          "provider_id": 10,
+          "provider_name": "Amazon Video",
+          "display_priority": 11
+        }
+      ],
+      "buy": [
+        {
+          "logo_path": "/9ghgSC0MA082EL6HLCW3GalykFD.jpg",
+          "provider_id": 2,
+          "provider_name": "Apple TV",
+          "display_priority": 3
+        },
+        {
+          "logo_path": "/seGSXajazLMCKGB5hnRCidtjay1.jpg",
+          "provider_id": 10,
+          "provider_name": "Amazon Video",
+          "display_priority": 11
+        }
+      ]
+    },
+    "GB": {
+      "link": "https://www.themoviedb.org/movie/693134-dune-part-two/watch?locale=GB",
+      "flatrate": [
+        {
+          "logo_path": "/1UrT2H9x6DuQ9ytNhsSCUFtTUwS.jpg",
+          "provider_id": 29,
+          "provider_name": "Sky Go",
+          "display_priority": 8
+        },
+        {
+          "logo_path": "/bAE4oSxhP5w3xOd8d0EIm2jdNI7.jpg",
+          "provider_id": 39,
+          "provider_name": "Now TV Cinema",
+          "display_priority": 10
+        }
+      ],
+      "rent": [
+        {
+          "logo_path": "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
+          "provider_id": 35,
+          "provider_name": "Rakuten TV",
+          "display_priority": 9
+        },
+        {
+          "logo_path": "/9ghgSC0MA082EL6HLCW3GalykFD.jpg",
+          "provider_id": 2,
+          "provider_name": "Apple TV",
+          "display_priority": 4
+        },
+        {
+          "logo_path": "/seGSXajazLMCKGB5hnRCidtjay1.jpg",
+          "provider_id": 10,
+          "provider_name": "Amazon Video",
+          "display_priority": 6
+        },
+        {
+          "logo_path": "/dngC0xxeTxo1Fl0dExbqrixFRuN.jpg",
+          "provider_id": 130,
+          "provider_name": "Sky Store",
+          "display_priority": 15
+        }
+      ],
+      "buy": [
+        {
+          "logo_path": "/9ghgSC0MA082EL6HLCW3GalykFD.jpg",
+          "provider_id": 2,
+          "provider_name": "Apple TV",
+          "display_priority": 4
+        },
+        {
+          "logo_path": "/seGSXajazLMCKGB5hnRCidtjay1.jpg",
+          "provider_id": 10,
+          "provider_name": "Amazon Video",
+          "display_priority": 6
+        },
+        {
+          "logo_path": "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
+          "provider_id": 35,
+          "provider_name": "Rakuten TV",
+          "display_priority": 9
+        }
+      ]
+    },
+    "JP": {
+      "link": "https://www.themoviedb.org/movie/693134-dune-part-two/watch?locale=JP"
+    },
+    "US": {
+      "link": "https://www.themoviedb.org/movie/693134-dune-part-two/watch?locale=US",
+      "flatrate": [
+        {
+          "logo_path": "/jbe4gVSfRlbPTdESXhEKpornsfu.jpg",
+          "provider_id": 1899,
+          "provider_name": "Max",
+          "display_priority": 27
+        },
+        {
+          "logo_path": "/oOr2H7WPpm2fFrbHpxJKWgKFfvv.jpg",
+          "provider_id": 1825,
+          "provider_name": "Max Amazon Channel",
+          "display_priority": 35
+        }
+      ],
+      "rent": [
+        {
+          "logo_path": "/seGSXajazLMCKGB5hnRCidtjay1.jpg",
+          "provider_id": 10,
+          "provider_name": "Amazon Video",
+          "display_priority": 7
+        },
+        {
+          "logo_path": "/9ghgSC0MA082EL6HLCW3GalykFD.jpg",
+          "provider_id": 2,
+          "provider_name": "Apple TV",
+          "display_priority": 5
+        },
+        {
+          "logo_path": "/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg",
+          "provider_id": 3,
+          "provider_name": "Google Play Movies",
+          "display_priority": 10
+        },
+        {
+          "logo_path": "/pTnn5VwDtOPtv6HGKAB4Zm3EZfd.jpg",
+          "provider_id": 192,
+          "provider_name": "YouTube",
+          "display_priority": 14
+        },
+        {
+          "logo_path": "/19fkcOz0xeUgCVW8tO85uOYnYK9.jpg",
+          "provider_id": 7,
+          "provider_name": "Fandango At Home",
+          "display_priority": 16
+        },
+        {
+          "logo_path": null,
+          "provider_id": 486,
+          "provider_name": "Spectrum On Demand",
+          "display_priority": 141
+        }
+      ],
+      "buy": [
+        {
+          "logo_path": "/9ghgSC0MA082EL6HLCW3GalykFD.jpg",
+          "provider_id": 2,
+          "provider_name": "Apple TV",
+          "display_priority": 5
+        },
+        {
+          "logo_path": "/seGSXajazLMCKGB5hnRCidtjay1.jpg",
+          "provider_id": 10,
+          "provider_name": "Amazon Video",
+          "display_priority": 7
+        },
+        {
+          "logo_path": "/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg",
+          "provider_id": 3,
+          "provider_name": "Google Play Movies",
+          "display_priority": 10
+        },
+        {
+          "logo_path": "/pTnn5VwDtOPtv6HGKAB4Zm3EZfd.jpg",
+          "provider_id": 192,
+          "provider_name": "YouTube",
+          "display_priority": 14
+        },
+        {
+          "logo_path": "/19fkcOz0xeUgCVW8tO85uOYnYK9.jpg",
+          "provider_id": 7,
+          "provider_name": "Fandango At Home",
+          "display_priority": 16
+        }
+      ]
+    }
+  }
+}

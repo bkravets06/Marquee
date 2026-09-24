@@ -382,6 +382,44 @@ enum PreviewData {
         imdbID: "tt15239678"
     )
 
+    /// Where Severance can be watched in a few regions.
+    static let sampleWatchProviders: WatchProviders = {
+        let appleTVPlus = WatchProvider(
+            id: 350,
+            name: "Apple TV+",
+            logoPath: "/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg",
+            displayPriority: 3
+        )
+        let appleTVPlusAmazon = WatchProvider(
+            id: 2552,
+            name: "Apple TV+ Amazon Channel",
+            logoPath: "/6r8CGxB1oNmM5rlQcYhaiL8gI0Y.jpg",
+            displayPriority: 44
+        )
+        let appleTV = WatchProvider(
+            id: 2,
+            name: "Apple TV",
+            logoPath: "/9ghgSC0MA082EL6HLCW3GalykFD.jpg",
+            displayPriority: 5
+        )
+        return WatchProviders(
+            id: 95396,
+            regions: [
+                "US": RegionWatchProviders(
+                    region: "US",
+                    link: URL(string: "https://www.themoviedb.org/tv/95396-severance/watch?locale=US"),
+                    flatrate: [appleTVPlus, appleTVPlusAmazon],
+                    buy: [appleTV]
+                ),
+                "GB": RegionWatchProviders(
+                    region: "GB",
+                    link: URL(string: "https://www.themoviedb.org/tv/95396-severance/watch?locale=GB"),
+                    flatrate: [appleTVPlus]
+                )
+            ]
+        )
+    }()
+
     // MARK: Private helpers
 
     private static func date(_ year: Int, _ month: Int, _ day: Int) -> Date? {

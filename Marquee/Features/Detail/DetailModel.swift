@@ -23,8 +23,9 @@ struct DetailEntry: Identifiable {
 // MARK: - DetailModel
 
 /// State for `MediaDetailView`: the library item (if any), fresh TMDB details
-/// (if reachable) and the derived values the screen displays, each preferring
-/// live details and falling back to what the library has cached.
+/// and where to watch (if reachable) and the derived values the screen
+/// displays, each preferring live details and falling back to what the
+/// library has cached.
 @MainActor
 @Observable
 final class DetailModel {
@@ -114,10 +115,12 @@ final class DetailModel {
         hasResolvedItem = true
     }
 
-    /// Resolves the library item, then fetches fresh TMDB details when the
-    /// title has a TMDB id and a client is available. Details are applied to
-    /// the library item so it stays current. Errors keep any cached data and
-    /// surface through `errorMessage`.
+    /// Resolves the library item, then fetches fresh TMDB details and where
+    /// the title can be watched when it has a TMDB id and a client is
+    /// available. The two requests run concurrently and the page renders as
+    /// soon as details arrive. Details are applied to the library item so it
+    /// stays current. Errors keep any cached data and surface through
+    /// `errorMessage`; a failed watch-provider load only affects its card.
     func load(store: LibraryStore, client: TMDBClient?) async {
         resolveItem(store: store)
         needsCredentials = false
@@ -141,6 +144,7 @@ final class DetailModel {
 
         isLoading = true
         errorMessage = nil
+        async let providersLoad: Void = loadWatchProviders(client: client)
 
         do {
             switch kind {
@@ -167,6 +171,7 @@ final class DetailModel {
             errorMessage = DetailModel.message(for: error)
         }
 
+        await providersLoad
         isLoading = false
     }
 
@@ -184,6 +189,46 @@ final class DetailModel {
             return tmdbError.errorDescription ?? "Something went wrong while talking to TMDB."
         }
         return error.localizedDescription
+    }
+
+    // MARK: Where to watch
+
+    /// Where the title can be watched, for every region TMDB lists. `nil` until a load succeeds.
+    var watchProviders: WatchProviders?
+    /// `true` while the watch-provider request is in flight.
+    var isLoadingWatchProviders = false
+    /// Human-readable description of the last failed watch-provider load, if any.
+    var watchProvidersErrorMessage: String?
+
+    /// `true` for TMDB titles; custom items never show Where to Watch.
+    var supportsWatchProviders: Bool { tmdbID != nil && !isCustom }
+
+    /// The offers for `region`, or `nil` when nothing has loaded or TMDB lists nothing there.
+    func watchProviders(in region: String) -> RegionWatchProviders? {
+        watchProviders?.providers(in: region)
+    }
+
+    /// Fetches where the title can be watched. Called by `load` and by the card's inline retry.
+    /// Without a TMDB id or a client it leaves the current state alone (no error, not loading).
+    func loadWatchProviders(client: TMDBClient?) async {
+        guard supportsWatchProviders, let tmdbID, let client else {
+            isLoadingWatchProviders = false
+            return
+        }
+
+        isLoadingWatchProviders = true
+        watchProvidersErrorMessage = nil
+
+        do {
+            watchProviders = try await client.watchProviders(id: tmdbID, kind: kind)
+        } catch {
+            // A cancelled request (the screen reloaded or went away) is not a failure.
+            if !Task.isCancelled {
+                watchProvidersErrorMessage = DetailModel.message(for: error)
+            }
+        }
+
+        isLoadingWatchProviders = false
     }
 
     // MARK: Text

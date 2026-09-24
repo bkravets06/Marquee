@@ -20,6 +20,14 @@ final class TMDBImageTests: XCTestCase {
         XCTAssertEqual(TMDBImage.still("/still.jpg", size: .w185)?.absoluteString, "https://image.tmdb.org/t/p/w185/still.jpg")
     }
 
+    func testLogoURL() {
+        XCTAssertEqual(TMDBImage.logo("/logo.jpg")?.absoluteString, "https://image.tmdb.org/t/p/w92/logo.jpg")
+        XCTAssertEqual(TMDBImage.logo("/logo.jpg", size: .w154)?.absoluteString, "https://image.tmdb.org/t/p/w154/logo.jpg")
+        XCTAssertEqual(TMDBImage.logo("/logo.jpg", size: .w45)?.absoluteString, "https://image.tmdb.org/t/p/w45/logo.jpg")
+        XCTAssertNil(TMDBImage.logo(nil))
+        XCTAssertNil(TMDBImage.logo(""))
+    }
+
     func testGenericBuilder() {
         XCTAssertEqual(TMDBImage.url(path: "/x.png", size: "w92")?.absoluteString, "https://image.tmdb.org/t/p/w92/x.png")
         XCTAssertEqual(TMDBImage.url(path: "x.png", size: "w92")?.absoluteString, "https://image.tmdb.org/t/p/w92/x.png", "a missing leading slash is tolerated")

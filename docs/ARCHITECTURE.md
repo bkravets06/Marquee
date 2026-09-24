@@ -34,16 +34,16 @@ Marquee/                           iOS app target "Marquee" (bundle id com.bjkra
     Root/                          RootView, OnboardingView
     Discover/                      DiscoverView, DiscoverModel, MediaCarousel, SeeAllView
     Library/                       LibraryView, LibraryRow, UpNextStrip
-    Detail/                        MediaDetailView, DetailModel, SeasonsView, EpisodeListView, EpisodeRow
+    Detail/                        MediaDetailView, DetailModel, MediaReference, WatchProvidersView, SeasonsView, EpisodeListView, EpisodeRow
     Search/                        SearchView, SearchModel
     Custom/                        CustomItemForm
     Settings/                      SettingsView, TokenEntryView
-MarqueeTests/                      iOS unit test target (XCTest) for the app: LibraryStore, MediaItem, NotificationManager planning
+MarqueeTests/                      iOS unit test target (XCTest) for the app: LibraryStore, MediaItem, NotificationManager planning, DiscoverModel, DetailModel
 MarqueeKit/                        Local Swift package (pure Swift + Foundation; builds on Linux)
   Package.swift
   Sources/MarqueeKit/
     Domain/                        MediaKind, WatchStatus, EpisodePointer, SeasonInfo, NextUp, ReleaseSchedule, CivilDate, EpisodeReminder
-    TMDB/                          TMDBClient, TMDBEndpoint, TMDBError, TMDBImage, TMDBGenres, DTOs (public) + RawDTOs (internal)
+    TMDB/                          TMDBClient, TMDBEndpoint, TMDBError, TMDBImage, TMDBGenres, WatchProviders, DTOs (public) + RawDTOs (internal)
   Tests/MarqueeKitTests/
     Fixtures/*.json                real-shaped TMDB responses
     *.swift                        XCTest: decoding, request building, NextUp, ReleaseSchedule, CivilDate, EpisodeReminder
@@ -277,6 +277,52 @@ public struct MovieDetails: Hashable, Codable, Sendable, Identifiable {
     public var summary: MediaSummary
 }
 
+/// Where a title can be streamed, rented or bought, per region
+/// (`GET /tv/{id}/watch/providers`, `GET /movie/{id}/watch/providers`). The data
+/// comes from JustWatch, which TMDB's terms require crediting wherever it is shown.
+public struct WatchProvider: Hashable, Codable, Sendable, Identifiable {
+    public var id: Int                     // provider_id
+    public var name: String                // provider_name
+    public var logoPath: String?           // logo_path; provider logos are square
+    public var displayPriority: Int        // display_priority; lower values are listed first
+    public init(id: Int, name: String, logoPath: String? = nil, displayPriority: Int = 0)
+}
+
+public enum WatchOfferKind: String, Codable, Sendable, CaseIterable, Identifiable {
+    case flatrate, free, ads, rent, buy    // TMDB's keys; allCases is the display order
+    public var id: String { rawValue }
+    public var displayName: String         // "Stream", "Free", "Free with Ads", "Rent", "Buy"
+}
+
+public struct WatchOfferGroup: Hashable, Sendable, Identifiable {
+    public var kind: WatchOfferKind
+    public var providers: [WatchProvider]
+    public var id: WatchOfferKind { kind }
+    public init(kind: WatchOfferKind, providers: [WatchProvider])
+}
+
+public struct RegionWatchProviders: Hashable, Codable, Sendable {
+    public var region: String              // ISO 3166-1 alpha-2, uppercased (stamped from the results key)
+    public var link: URL?                  // TMDB's watch page for the title in this region; carries the JustWatch attribution
+    public var flatrate: [WatchProvider]
+    public var free: [WatchProvider]
+    public var ads: [WatchProvider]
+    public var rent: [WatchProvider]
+    public var buy: [WatchProvider]
+    public init(region:link:flatrate:free:ads:rent:buy:)   // all but region default to nil / []
+    public func providers(of kind: WatchOfferKind) -> [WatchProvider]   // in TMDB's order
+    public var groups: [WatchOfferGroup]   // non-empty kinds in allCases order; each sorted by displayPriority then name, repeated ids dropped
+    public var isEmpty: Bool               // no provider under any kind
+}
+
+public struct WatchProviders: Hashable, Codable, Sendable, Identifiable {
+    public var id: Int                                     // the show or movie id
+    public var regions: [String: RegionWatchProviders]     // keyed by uppercased region code; entries without providers are kept
+    public init(id: Int, regions: [String: RegionWatchProviders])
+    public func providers(in region: String) -> RegionWatchProviders?   // case-insensitive; nil when TMDB lists no provider there
+    public var availableRegions: [String]                  // codes with at least one provider, sorted
+}
+
 public enum TrendingScope: String, Sendable { case all, tv, movie }
 public enum TrendingWindow: String, Sendable { case day, week }
 
@@ -295,10 +341,12 @@ public enum TMDBImage {
     public enum PosterSize: String, Sendable { case w92, w154, w185, w342, w500, w780, original }
     public enum BackdropSize: String, Sendable { case w300, w780, w1280, original }
     public enum StillSize: String, Sendable { case w92, w185, w300, original }
+    public enum LogoSize: String, Sendable { case w45, w92, w154, w185, w300, w500, original }
     public static let baseURL = URL(string: "https://image.tmdb.org/t/p/")!
     public static func poster(_ path: String?, size: PosterSize = .w342) -> URL?
     public static func backdrop(_ path: String?, size: BackdropSize = .w780) -> URL?
     public static func still(_ path: String?, size: StillSize = .w300) -> URL?
+    public static func logo(_ path: String?, size: LogoSize = .w92) -> URL?
     public static func url(path: String?, size: String) -> URL?
 }
 
@@ -336,6 +384,7 @@ public actor TMDBClient {
     public func showDetails(id: Int) async throws -> TVShowDetails         // GET /tv/{id}
     public func season(showID: Int, number: Int) async throws -> SeasonDetails   // GET /tv/{id}/season/{n}
     public func movieDetails(id: Int) async throws -> MovieDetails         // GET /movie/{id}
+    public func watchProviders(id: Int, kind: MediaKind) async throws -> WatchProviders   // GET /tv/{id}/watch/providers or /movie/{id}/watch/providers; every region in one response
 }
 ```
 
@@ -349,6 +398,15 @@ Implementation notes for the client:
   (`RawTVResult`, `RawMovieResult`, `RawMultiResult` with `mediaType`) mapped to
   `MediaSummary`. `nil`/missing `overview` becomes `""`; missing vote fields
   become 0.
+* Watch providers decode leniently: `results` maps region code → object with
+  `link` and the five offer arrays. A missing or null array becomes `[]`; a
+  missing, null or empty `link`, or one without a scheme and host, becomes
+  `nil`; `results` missing, null, or in TMDB's empty-array form (`[]`)
+  becomes `[:]`; region keys are uppercased and stamped onto each entry. A
+  provider without `provider_id` still throws. The data comes from JustWatch
+  and TMDB's terms require crediting JustWatch wherever it is shown: UI that
+  displays providers must carry the attribution and offer
+  `RegionWatchProviders.link`.
 * Map status codes: 401 → `.unauthorized`, 404 → `.notFound`, 429 →
   `.rateLimited(retryAfter:)` (parse `Retry-After`), other non-2xx →
   `.http(status:message:)` using TMDB's `status_message` if present.
@@ -362,12 +420,20 @@ Fixtures live in `Tests/MarqueeKitTests/Fixtures` and are declared as
 `trending_all_day.json` (mix of tv, movie and one person), `search_multi.json`,
 `tv_airing_today.json`, `movie_now_playing.json`, `tv_details.json` (with
 `next_episode_to_air`, `last_episode_to_air`, seasons including a season 0),
-`tv_season.json`, `movie_details.json`, `error_401.json`. Tests cover decoding of
+`tv_season.json`, `movie_details.json`, `movie_watch_providers.json` (Dune:
+Part Two; CA, GB, JP with only a `link`, US with flatrate/rent/buy),
+`tv_watch_providers.json` (Severance; AU with empty `free`/`ads`, GB, US),
+`error_401.json`. Tests cover decoding of
 each, `CivilDate` parsing (incl. "" → nil), `NextUp` (not started, mid-season,
 season rollover, caught up, specials skipped, empty seasons skipped),
 `ReleaseSchedule.nextOccurrence`, `EpisodeReminder.fireComponents` (past →
-nil), request building (paths, `Bearer` header vs `api_key` query, language,
-region), and error mapping using a `URLProtocol` stub.
+nil), watch providers (`WatchProvidersTests`: decoding of both fixtures,
+case-insensitive region lookup, `groups` order/sort/dedupe, the leniency
+rules above, encode/decode round trips; `testWatchProviderPaths` and
+`testWatchProvidersSendExpectedRequests` in `RequestBuildingTests`;
+`testLogoURL` in `TMDBImageTests`), request building (paths, `Bearer` header
+vs `api_key` query, language, region), and error mapping using a
+stub transport.
 
 ---
 
@@ -478,7 +544,8 @@ automatically; the per-show toggle is the opt-out.
 ### 3.3 `PreviewData`
 
 `enum PreviewData { @MainActor static let container: ModelContainer  // in-memory, pre-populated
-                    static func sampleItems() -> [MediaItem]; static let sampleSummary: MediaSummary; static let sampleShowDetails ... }`
+                    static func sampleItems() -> [MediaItem]; static let sampleSummary: MediaSummary; static let sampleShowDetails ...
+                    static let sampleWatchProviders: WatchProviders  // Severance in US and GB }`
 Used by `#Preview` blocks and tests.
 
 ---
@@ -494,7 +561,8 @@ Used by `#Preview` blocks and tests.
   `TMDB_ACCESS_TOKEN`). Region/language from `settings`.
 * `AppSettings` (`@Observable`, UserDefaults-backed): `hasCompletedOnboarding: Bool`,
   `reminderHour: Int` (default 9), `reminderMinute: Int` (0),
-  `region: String` (default `Locale.current.region?.identifier ?? "US"`),
+  `region: String` (default `Locale.current.region?.identifier ?? "US"`; used
+  for In Theaters/Coming Soon and Where to Watch),
   `lastLibraryRefresh: Date?`, `reminderTime: Date` (get/set convenience for a
   `DatePicker`).
 * `Keychain`: `enum Keychain { static func string(for key: String) -> String?; static func set(_ value: String, for key: String) throws; static func delete(_ key: String) }` (Security framework, `kSecClassGenericPassword`, service `com.bjkravets.marquee`).
@@ -582,7 +650,19 @@ states per segment with a "Discover" / "Search" button. Tap → `MediaDetailView
 **Detail** — `MediaDetailView(reference: MediaReference)` with
 `enum MediaReference: Hashable { case tmdb(id: Int, kind: MediaKind); case library(UUID) }`.
 `DetailModel` resolves: library item (if any) + fresh TMDB details when a
-`tmdbID` exists (and calls `store.apply` to keep the item fresh). Layout: hero
+`tmdbID` exists (and calls `store.apply` to keep the item fresh). It also
+carries the Where to Watch state: `var watchProviders: WatchProviders?` (nil
+until a load succeeds), `var isLoadingWatchProviders: Bool`,
+`var watchProvidersErrorMessage: String?`, `var supportsWatchProviders: Bool`
+(`tmdbID != nil && !isCustom`),
+`func watchProviders(in region: String) -> RegionWatchProviders?` and
+`func loadWatchProviders(client: TMDBClient?) async`. `load(store:client:)`
+runs the details request and the watch-provider request concurrently
+(`async let`): the page renders when details arrive, the card fills in when
+providers arrive, and a provider failure never blocks the page. The view's
+load task is keyed on `DetailLoadKey(hasCredentials:region:)`, so changing
+Region in Settings reloads both details (the client's language tag includes
+the region) and the card. Layout: hero
 backdrop (16:9, gradient into background, `.ignoresSafeArea(edges: .top)`),
 poster + title block (title `.title2.bold()` in a compact width class,
 `.title.bold()` in regular — the nav bar shows the title inline; tagline,
@@ -593,13 +673,28 @@ status or "Add to Library"), notifications `Toggle` (shows in library only),
 share/link. Sections: **Next Episode** card (name, S/E, air date relative) when
 known; **Progress** card (shows in library): "You're on S2 E5" / "Not started",
 progress bar `ProgressView(value:)`, buttons "Mark Next Watched" and "Undo".
+**Where to Watch** card (`WatchProvidersView(model: DetailModel, region: String, onRetry: () -> Void, onChangeRegion: () -> Void)`
+in `Features/Detail/WatchProvidersView.swift`, plus a private `ProviderChip`;
+`region` is `AppSettings.region`): `DetailCard("Where to Watch")` showing the
+region's `groups` in `WatchOfferKind.allCases` order, each a caption header
+(`displayName`) over a horizontally scrolling row of provider chips (48pt
+square logo from `TMDBImage.logo(_, size: .w154)`, rounded 10pt, name in
+`caption2` below; the logo size is a `@ScaledMetric`). Footer:
+`Link("All Options on TMDB")` to `RegionWatchProviders.link` when present, and
+the required attribution "Availability in <Region name>, provided by
+JustWatch." Empty (loaded, nothing in the region): "Not available to stream,
+rent or buy in <Region name>." with a "Change Region" button that opens the
+Settings sheet. Failure with nothing loaded: an inline `ErrorRetryView`.
+Loading with nothing loaded: a redacted placeholder card. Custom titles and
+titles without a client: no card.
 **Seasons** list (`NavigationLink` per regular season → `EpisodeListView`,
 which fetches `season(showID:number:)` and shows `EpisodeRow`s with air dates,
 a checkmark for watched (pointer ≥ episode), tap to set progress to that
 episode, and "Mark season watched"). **Overview** with expandable text.
 **Details** grouped rows (status, first/last aired, networks, runtime,
-language, "View on TMDB" link). Custom items: no TMDB sections; **Edit** toolbar
-button opens `CustomItemForm(item:)`; reminders row shows the schedule summary.
+language, "View on TMDB" link). **Notes** (a library item's notes, when not
+empty). Custom items: no TMDB sections; **Edit** toolbar button opens
+`CustomItemForm(item:)`; reminders row shows the schedule summary.
 Toolbar: ellipsis menu (Refresh, Remove from Library).
 
 **Search** — `SearchView` in the search tab: `.searchable(text:prompt: "Shows, Movies")`,
@@ -628,10 +723,11 @@ https://www.themoviedb.org/settings/api, explanation of v4 token vs v3 key),
 `UIApplication.openNotificationSettingsURLString`, "Remind me at" `DatePicker`,
 "Refresh episodes now" button with last-refresh footer, pending count),
 **Content** (Region `Picker` over `Locale.Region.isoRegions` sorted by localized
-name — used for In Theaters/Coming Soon), **Data** (item counts, "Delete All
-Data" with confirmation dialog), **About** (version/build, TMDB attribution
-"This product uses the TMDB API but is not endorsed or certified by TMDB.",
-GitHub link).
+name; footer "Used for In Theaters and Coming Soon in Discover, and for Where
+to Watch on show and movie screens."), **Data** (item counts, "Delete All
+Data" with confirmation dialog), **About** (version/build, footer "This
+product uses the TMDB API but is not endorsed or certified by TMDB. Where to
+Watch data is provided by JustWatch.", GitHub link).
 
 **Onboarding** — `OnboardingView` `fullScreenCover`, 3 pages in a `TabView(.page)`:
 Welcome (icon + three feature rows with SF Symbols), Connect TMDB (embedded

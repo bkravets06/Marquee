@@ -7,6 +7,7 @@ public enum TMDBImage {
     public enum PosterSize: String, Sendable { case w92, w154, w185, w342, w500, w780, original }
     public enum BackdropSize: String, Sendable { case w300, w780, w1280, original }
     public enum StillSize: String, Sendable { case w92, w185, w300, original }
+    public enum LogoSize: String, Sendable { case w45, w92, w154, w185, w300, w500, original }
 
     public static let baseURL = URL(string: "https://image.tmdb.org/t/p/")!
 
@@ -22,6 +23,11 @@ public enum TMDBImage {
 
     /// Episode still URL for a TMDB `still_path`.
     public static func still(_ path: String?, size: StillSize = .w300) -> URL? {
+        url(path: path, size: size.rawValue)
+    }
+
+    /// Watch provider or network logo URL for a TMDB `logo_path`.
+    public static func logo(_ path: String?, size: LogoSize = .w92) -> URL? {
         url(path: path, size: size.rawValue)
     }
 

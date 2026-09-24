@@ -9,9 +9,18 @@ under *Verification results*, including the checks done on a physical device.
 
 - `main` holds the complete app and is the default branch (renamed from
   `claude/ios-show-movie-tracker-ilhaq1`; GitHub redirects the old name).
+- Where to Watch (2026-09-24, branch `feature/watch-providers`): a card on
+  every TMDB show and movie screen with the streaming, rental and purchase offers for
+  `AppSettings.region` (changing Region in Settings reloads it), TMDB's watch
+  link and the JustWatch attribution. New: `MarqueeKit/Sources/MarqueeKit/TMDB/WatchProviders.swift`
+  with `TMDBClient.watchProviders(id:kind:)` and `TMDBImage.logo(_:size:)`,
+  `Marquee/Features/Detail/WatchProvidersView.swift`, watch-provider state
+  on `DetailModel`, `PreviewData.sampleWatchProviders`,
+  `WatchProvidersTests` with two fixtures, and
+  `MarqueeTests/DetailModelTests.swift`.
 - CI (`.github/workflows/ci.yml`, macOS 26 / Xcode 26.6 / iPhone 17 Pro
-  simulator) is green: app build with zero warnings, 132 MarqueeKit tests,
-  61 app tests. Runs: https://github.com/bkravets06/Marquee/actions
+  simulator) is green: app build with zero warnings, 149 MarqueeKit tests,
+  65 app tests. Runs: https://github.com/bkravets06/Marquee/actions
 - CI also installs the Debug build in the simulator, launches it with the
   debug launch arguments below and captures screenshots. A push whose commit
   message contains `[screenshots]` commits them to `docs/screenshots/`
@@ -39,9 +48,11 @@ under *Verification results*, including the checks done on a physical device.
    Never write the token into a file, scheme shared data, or a commit.
 3. Walk the flows: Discover carousels load → tap a show → detail → add to
    Watching → Library row shows progress → mark next episode watched → open
-   Seasons → episode list → Search → quick add → custom title via Library `+`
-   → Settings (key, reminder time, region, refresh, delete all) → toggle
-   reminders on a show (permission prompt) → background it and return.
+   Seasons → episode list → Where to Watch card on a show and a movie →
+   change Region in Settings and confirm the card updates → Search → quick
+   add → custom title via Library `+` → Settings (key, reminder time, region,
+   refresh, delete all) → toggle reminders on a show (permission prompt) →
+   background it and return.
 
 ## Verify these specifically
 
@@ -77,6 +88,11 @@ Reviewers flagged these as correct-by-reading but only provable on a device:
 - **Empty and error states.** Remove the key in Settings and confirm Discover
   and Search show the connect state with a working button to Settings; turn
   Wi-Fi off and confirm inline retry rows appear.
+- **Where to Watch.** On a show and a movie, provider logos load in light and
+  dark mode and the horizontal rows scroll edge to edge inside the card;
+  "All Options on TMDB" opens TMDB's watch page; a region with no offers
+  (pick a small region in Settings) shows the empty state and its "Change
+  Region" button opens Settings; the card is absent on custom titles.
 
 Fix what you find with minimal, targeted changes; keep the conventions in
 `CLAUDE.md`; run `swift test --package-path MarqueeKit` and the Xcode tests;
@@ -136,6 +152,31 @@ Note: unsigned builds (`CODE_SIGNING_ALLOWED=NO`) cannot write to the
 Keychain (`errSecMissingEntitlement`, -34018), so saving a key fails there.
 Xcode's normal Run signs ad hoc and works.
 
+### Where to Watch (local session, 2026-09-24, `feature/watch-providers`)
+
+No simulator on this Mac had a TMDB credential, so the card was exercised
+end to end in the iPhone 17 Pro (iOS 26.4) and iPad Pro 11-inch simulators
+with a throwaway Debug-only `URLProtocol` (not committed) that answered the
+API from `PreviewData` plus a richer movie sample; provider logos loaded from
+TMDB's real image CDN. Confirmed:
+
+- Placement: after Progress on a show, first on a movie. "Stream", "Free",
+  "Free with Ads", "Rent" and "Buy" rows in that order, each scrolling
+  horizontally edge to edge of the card; real logos and the placeholder for
+  a missing logo path; "All Options on TMDB" opens Safari on themoviedb.org;
+  the JustWatch line. Light and dark mode.
+- Region: with the region set to France the empty state shows, "Change
+  Region" opens Settings, and after picking United States and tapping Done
+  the card reloads in place with the US offers (the region-keyed load task).
+- Error: a forced HTTP 500 on the providers request shows the inline message
+  with Retry while the rest of the page loads normally.
+- iPad at the accessibility-extra-large text size: the logo grows with
+  `@ScaledMetric`, names wrap to two lines, nothing clips.
+
+Not yet verified: decoding of a live `/watch/providers` response (the
+fixtures follow TMDB's documented shape). The first session with a token
+should open a show and a movie and confirm the card fills in.
+
 ## Debug launch arguments (Debug builds only)
 
 | Argument | Effect |
@@ -157,5 +198,4 @@ manually with *commit_screenshots*) to refresh them.
 
 ## Known follow-ups (optional, in rough priority)
 
-1. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import,
-   watch providers.
+1. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import.
