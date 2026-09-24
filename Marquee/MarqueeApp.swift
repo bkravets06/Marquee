@@ -19,6 +19,7 @@ struct MarqueeApp: App {
             RootView()
                 .environment(AppEnvironment.shared)
                 .environment(Navigator.shared)
+                .task { await MarqueeApp.applyDebugLaunchOptions() }
         }
         .modelContainer(AppModelContainer.shared)
         .onChange(of: scenePhase) { _, newPhase in
@@ -46,6 +47,24 @@ struct MarqueeApp: App {
         @unknown default:
             break
         }
+    }
+}
+
+// MARK: - Debug launch options
+
+extension MarqueeApp {
+
+    /// Applies script-friendly launch arguments (see `DebugLaunchOptions`).
+    /// Does nothing in Release builds.
+    @MainActor
+    static func applyDebugLaunchOptions() async {
+        #if DEBUG
+        await DebugSeeder.runIfRequested(
+            context: AppModelContainer.shared.mainContext,
+            environment: AppEnvironment.shared,
+            navigator: Navigator.shared
+        )
+        #endif
     }
 }
 

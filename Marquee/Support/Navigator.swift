@@ -35,7 +35,13 @@ final class Navigator {
     /// A library item that should be shown as soon as `RootView` can react.
     var pendingItemID: UUID?
 
-    init() {}
+    init() {
+        #if DEBUG
+        if let requestedTab = DebugLaunchOptions.initialTab {
+            tab = requestedTab
+        }
+        #endif
+    }
 
     /// Requests that the item with `itemID` be shown in the Library tab.
     /// `RootView` observes `pendingItemID` and performs the navigation.
