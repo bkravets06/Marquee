@@ -7,8 +7,8 @@ under *Verification results*. What is left needs a physical device.
 
 ## Where things stand
 
-- Branch `claude/ios-show-movie-tracker-ilhaq1` holds the complete app and is
-  currently the repository's default branch (there is no `main` yet).
+- `main` holds the complete app and is the default branch (renamed from
+  `claude/ios-show-movie-tracker-ilhaq1`; GitHub redirects the old name).
 - CI (`.github/workflows/ci.yml`, macOS 26 / Xcode 26.6 / iPhone 17 Pro
   simulator) is green: app build with zero warnings, 132 MarqueeKit tests,
   61 app tests. Runs: https://github.com/bkravets06/Marquee/actions
@@ -151,9 +151,6 @@ the "Connect to TMDB" state; add the secret first
 
 ## Known follow-ups (optional, in rough priority)
 
-1. Rename the branch to `main` and make it the default on GitHub once the
-   owner agrees (`git branch -m main && git push -u origin main`, then
-   Settings → Branches).
-2. Add a LICENSE (owner's choice) and a README *License* section.
-3. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import,
+1. Add a LICENSE (owner's choice) and a README *License* section.
+2. Roadmap items from the README: Up Next widgets, iCloud sync, Trakt import,
    watch providers.
